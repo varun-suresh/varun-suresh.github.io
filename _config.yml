@@ -25,7 +25,7 @@ description: Personal Website
 navbar-links:
   Home: ""
   Projects:
-    - Retrieval Augmented Generation: "https://github.com/varun-suresh/experiments-with-gpt2/tree/main/rag"
+    - Retrieval Augmented Generation: "https://varun-suresh.github.io/2024-12-23-RAG"
     - High dimensional clustering: "https://github.com/varun-suresh/Clustering"
     - Sentiment Analysis using GPT-2: "https://github.com/varun-suresh/experiments-with-gpt2/tree/main/sentiment-classification"
   Resume: "resume"
