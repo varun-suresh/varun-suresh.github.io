@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% include "head.njk" %}
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type":"WebSite",
+        "name":"{{site.title}}",
+        "headline": "{{ title }}",
+        "description": "{{subtitle or site.subtitle}}",
+        "author":{
+            "@type": "Person",
+            "name": "{{site.authorName}}",
+            "url": "{{site.url}}"
+        }
+            "dateModified": "{{ page.inputPath | lastModifiedDate }}", 
+            "url": "{{ site.url }}{{ page.url }}",
+            "mainEntityOfPage": {
+                "@type": "WebPage",
+                "@id": "{{ site.url }}{{ page.url }}"
+            },
+            "keywords": "{{ tags | join(', ') }}"
+            }
+        </script>
+    </head>
+    <header>
+        <nav class="topbar">
+            <div class="right-aligned-links">
+            <a href="/"
+                   class="no-tufte-underline"
+                   style="color: #246eb9;
+                          margin-right: 3%">Varun Suresh</a> 
+                <a href="/#projects" class="no-tufte-underline">Projects</a>
+                    <a href="/#reading-list" class="no-tufte-underline">reading list</a>
+            </nav>
+    </header>
+        <body>
+            <article>
+                {# NOTE: no title in this layout#}
+                {{ content | safe }}
+            </article>
+            <footer>
+                {% include "footer.njk" %}
+            </footer>
+        </body>
+    </html>
