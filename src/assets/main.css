@@ -1,15 +1,26 @@
-.fab, .fas {
+.fab,
+.fas {
   font-family: fontawesome !important;
   font-size: 1.2em;
   text-decoration: none;
   color: #666;
 }
 
-.fab:hover, .fas:hover {
+.fab:hover,
+.fas:hover {
   color: #111;
 }
 
 .social-links a:link {
   background: none;
   background-repeat: no-repeat;
+}
+
+.sidenote {
+  float: right; /* Positions it to the right */
+  width: 40%; /* Adjust size */
+  margin: 0 0 1em 1em; /* Space around image */
+  text-align: center; /* Center caption text */
+  font-size: 0.9em;
+  color: gray;
 }
