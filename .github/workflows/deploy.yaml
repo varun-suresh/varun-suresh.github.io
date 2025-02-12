@@ -41,6 +41,4 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           branch: main
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist # default: public
-          keep_files: false # replace all files
+          folder: dist
