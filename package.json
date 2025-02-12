@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Personal website",
   "main": "index.js",
-  "type": "module",
   "scripts": {
     "build": "npx @11ty/eleventy",
     "serve": "npx @11ty/eleventy --serve",
