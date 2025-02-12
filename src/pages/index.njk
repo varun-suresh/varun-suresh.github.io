@@ -8,6 +8,16 @@ permalink: "/"
 <section>
     <h1>Hello, I'm Varun</h1>
     <p>
+        <span class="marginnote">
+            <img src="/assets/img/aurora_pic.jpg"
+                 alt="me"
+                 class="profile-picture"
+                 style="max-width: 749px;
+                        height: auto" />
+        </span>
+        <span class="marginnote">
+        With the Aurora self driving truck in Dallas, TX
+        </span>
 
     I'm a Machine Learning Engineer with a focus on Computer Vision. I'm interested in self-supervised learning, leveraging unlabeled data to build scalable AI systems. 
     </p>
@@ -23,20 +33,10 @@ permalink: "/"
    </p>   
 </section>
 
-<section>
-<h2 id="projects">Projects</h2>
-<ul>
-{% for p in collections.posts | reverse %}
-    <li>
-        <a href="{{p.url}}">{{p.data.title}}</a>
-        &nbsp
-        <p style="margin-top" 0;">
-            <small><em> {{p.data.date | postDate }}</em> - {{p.data.blurb}}</small>
-        </p>
-    </li>
-    {% endfor %}
-</ul>
-</section>
-<section>
-<h2 id="reading-list">Reading List</h2>
 
+<section>
+<h2 id="website">Website</h2>
+<p>
+This website was made using <a href="https://www.11ty.dev">11ty</a>, <a href="https://edwardtufte.github.io/tufte-css">Tufte CSS</a> and <a href="https://github.com/nerdhaus/eleventufte/tree/main">eleventufte</a>. All the figures were drawn using <a href="https://excalidraw.com">Excalidraw</a>. This website was inspired by <a href="https://www.tylerromero.com/">Tyler Romero's blog</a>
+</p>
+</section>
