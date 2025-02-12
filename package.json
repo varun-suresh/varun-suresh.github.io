@@ -6,7 +6,8 @@
     "defaults"
   ],
   "scripts": {
-    "serve": "npx @11ty/eleventy --serve"
+    "serve": "eleventy --serve",
+    "build": "eleventy"  
   },
   "repository": {
     "type": "git",
