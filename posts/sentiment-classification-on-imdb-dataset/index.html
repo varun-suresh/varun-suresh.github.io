@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+  <head>
+		<!-- Required meta tags -->
+
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<title>Varun Suresh</title>
+<meta name="author" content="" />
+<meta name="description" content="Personal Website">
+
+<link type="application/atom+xml" rel="alternate" href="varun-suresh.github.io/feed.xml" title="Varun Suresh">
+
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/tufte-css/et-book/et-book-roman-line-figures/et-book-roman-line-figures.woff" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/tufte-css/et-book/et-book-display-italic-old-style-figures/et-book-display-italic-old-style-figures.woff" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/tufte-css/et-book/et-book-bold-line-figures/et-book-bold-line-figures.woff" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/tufte-css/et-book/et-book-roman-old-style-figures/et-book-roman-old-style-figures.woff" />
+
+
+
+
+<link rel="stylesheet" href="/assets/main.css">
+<link rel="stylesheet" href="/assets/tufte-css/tufte.min.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/3434e84155.css">
+<!-- KaTeX Support -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"
+      integrity="sha384-wcIxkf4k558AjM3Yz3BBFQUbk/zgIYC2R0QpeeYb+TwlBVMrlgLqwRjRtGZiK7ww"
+      crossorigin="anonymous" />
+<script defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"
+        integrity="sha384-hIoBPJpTUs74ddyc4bFZSM1TVlQDA60VBbJS0oA934VSz82sBx1X7kSx2ATBDIyd"
+        crossorigin="anonymous"></script>
+<script defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
+        integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk"
+        crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+<!-- BibTeX Support -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/pcooksey/bibtex-js@1.0.0/src/bibtex_js.min.js"></script>
+<!-- Stylesheets -->
+<link rel="stylesheet" href="/assets/tufte.min.css" />
+<link rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" />
+  </head>
+  <body>
+		<article>
+		<h1>Sentiment Classification on IMDb dataset
+</h1>
+		<p class="subtitle">Fine-tune GPT-2 and BERT using LoRA
+</p>
+				<section><h1 id="introduction">Introduction</h1><p>What is sentiment classification?</p><p>Given a review, we want to classify this review as either positive or negative. For example, “The movie was incredible” should be classified as a positive review and “The performances were terrible” should be classified as negative. On a simple sentence, this is easy to do. However, reviews tend to be long and a lot of the times quite nuanced.</p><p>Sentiment classification is a well studied problem in Natural Language Processing. Large Language Models (LLMs) in the past few years have achieved excellent results in this area. In this post, I explore sentiment classification using <a href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf">GPT-2</a> base model (124M) and <a href="https://arxiv.org/pdf/1810.04805">BERT</a> base model (124M).</p><h1 id="goal">Goal</h1><p>Fine-tune GPT-2 and BERT with and without <a href="https://arxiv.org/abs/2106.09685">LoRA</a> to do sentiment classification and benchmark their performance.</p><h1 id="overview">Overview</h1><p>Below is a brief overview of the data, GPT-2 and BERT. For both models, I used pre-trained weights from <a href="https://huggingface.co/">HuggingFace</a> as the starting point and fine-tuned them for sentiment classification.</p></section>
+<section><h2 id="large-movie-review-dataset">Large Movie Review Dataset</h2><p>This <a href="https://ai.stanford.edu/~amaas/data/sentiment/">dataset</a> contains 50k movie reviews (25k training and 25k test). There are an equal number of positive and negative reviews in this dataset.</p></section>
+<section><h2 id="gpt-2">GPT-2</h2><p>GPT-2 is a model from OpenAI trained for text generation i.e the model predicts the most probable next word given the previous words. For example</p><pre><code>Once upon a
+</code></pre><p>the most probable next word is <code>time</code> and that is what GPT-2 would generate. The word after that will be conditioned on <code>Once upon a time</code> and so on.The number of "words"(tokens) the model attends to before generating the next word is called the context window. The model uses causal self-attention, this means the model can only attend to words <em>before</em> but not words that come after it.</p></section>
+<section><h2 id="bert">BERT</h2><p>BERT is a model from Google and it was trained using the Masked Language Modeling(MLM) and Next Sentence Prediction (NSP) objectives. Given a sentence like</p><pre><code>Once [MASK] a time
+</code></pre><p>the model is trained to predict the word at the <code>[MASK]</code> location. Unlike GPT-2, the model attends to words <em>before</em> and <em>after</em> the <code>[MASK]</code> token to infer the most probable word.</p><h1 id="experiments">Experiments</h1></section>
+<section><h2 id="zero-shot-learning-with-gpt-2">Zero Shot Learning with GPT-2</h2><p>Given a prompt like “Review: The movie was awesome! Sentiment:”, I compare the likelihood of the next token being “ Positive” and “ Negative” and classify the review.</p><p>I tried a few prompts and the results varied quite a lot. An additional space ("Positive" and " Positive") results in different tokens and the model is quite sensitive to these prompts. Among the few prompts I tried, the one I used eventually had the best results.</p></section>
+<section><h2 id="fine-tuning-using-gpt-2">Fine Tuning using GPT-2</h2><p>In this setting, I froze the Positional Embedding weights, Token Encoding weights and the first 10 transformer blocks. Instead of the language modeling head, I used a binary classification head (a fully-connected layer with just one output followed by a sigmoid to make the output between 0 and 1 where 0 is negative and 1 is positive). I used the binary cross entropy loss function.</p><p>Parameter count when fine-tuning:</p><p>Transformer Block Layer 11:</p><pre><code>Query Weights = 768 * 768 + 768 (Embedding size = 768, Weights + Bias) = 590592
+Key Weights = 768 * 768 + 768
+Value Weights = 768 * 768 + 768 = 590592
+Layer Norm (2) = 768 * 2 (gamma and beta) * 2(2 layer norms in a transformer block) = 3072
+Feed Forward Weights 1 = 768 * (4*768) + 4*768 = 2362368
+Feed Forward Weights 2 = 4*768 *768 + 768 = 2360064
+
+Total = 7087872
+</code></pre><p>Binary Classification Head</p><pre><code>Weights = 768 * 1
+</code></pre><p>When finetuning, about 14M parameters are being modified (14M out of 124M).</p></section>
+<section><h2 id="fine-tuning-using-gpt-2-and-lora">Fine Tuning using GPT-2 and LoRA</h2><p>When using LoRA, the pre-trained weights are unchanged. It introduces two matrices <strong>A</strong> and <strong>B</strong> whose product is added to the weight matrix. Let’s consider a concrete example:</p><p>Let W<sub>k</sub> be a weights matrix. In this case, let’s consider the keys weight in a transformer block. The weights have the dimension 768 * 768 and the bias is a 768 dimensional tensor.</p><p>Instead of modifying this large matrix, we can write</p><p><span class="inlineMath"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mtext> </mtext><msub><mi>W</mi><mi>k</mi></msub><mo>=</mo><msub><mi>W</mi><mi>k</mi></msub><mo>+</mo><mi mathvariant="normal">Δ</mi><mi>W</mi></mrow><annotation encoding="application/x-tex">\ W_k = W_k + \Delta W</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mspace"> </span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.83333em;vertical-align:-0.15em;"></span><span class="mord"><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="msupsub"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:0.33610799999999996em;"><span style="top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.03148em;">k</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.15em;"><span></span></span></span></span></span></span><span class="mspace" style="margin-right:0.2222222222222222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222222222222222em;"></span></span><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mord">Δ</span><span class="mord mathdefault" style="margin-right:0.13889em;">W</span></span></span></span></span></p><p><span class="inlineMath"><span class="katex"><span class="katex-mathml"><math><semantics><mrow><mtext> </mtext><mi mathvariant="normal">Δ</mi><mi>W</mi><mo>=</mo><mi>A</mi><msup><mi>B</mi><mi>T</mi></msup></mrow><annotation encoding="application/x-tex">\ \Delta W = AB^T</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:0.68333em;vertical-align:0em;"></span><span class="mspace"> </span><span class="mord">Δ</span><span class="mord mathdefault" style="margin-right:0.13889em;">W</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2777777777777778em;"></span></span><span class="base"><span class="strut" style="height:0.8413309999999999em;vertical-align:0em;"></span><span class="mord mathdefault">A</span><span class="mord"><span class="mord mathdefault" style="margin-right:0.05017em;">B</span><span class="msupsub"><span class="vlist-t"><span class="vlist-r"><span class="vlist" style="height:0.8413309999999999em;"><span style="top:-3.063em;margin-right:0.05em;"><span class="pstrut" style="height:2.7em;"></span><span class="sizing reset-size6 size3 mtight"><span class="mord mathdefault mtight" style="margin-right:0.13889em;">T</span></span></span></span></span></span></span></span></span></span></span></span></p><p>where <strong>A</strong> and <strong>B</strong> are two low rank matrices of dimension 768 × 8 . AB<sup>T</sup> will result in a matrix of dimension 768 × 768, but the number of learned parameters are</p><pre><code>768 * 8 * 2(A and B) * 2(Keys and Weights matrix) = 24576
+</code></pre><p>significantly lower than ~7M parameters per transformer layer when fine tuning all the parameters.</p></section>
+<section><h2 id="fine-tuning-using-bert">Fine Tuning using BERT</h2><p>Similar to GPT-2, I froze the embeddings and the first 10 layers of the transformer. I took the mean of the embeddings of all the tokens and added a binary classification head on top.</p></section>
+<section><h2 id="fine-tuning-using-bert--lora">Fine Tuning using BERT + LoRA</h2><p>In this setting, I froze the first 10 layers of the transformer and only learn the LoRA parameters for the last two layers. The binary classification head is also learnt during the process.</p><h1 id="results">Results</h1><p>To reproduce these results, clone my <a href="https://github.com/varun-suresh/experiments-with-gpt2/">repository</a> and run the <a href="https://github.com/varun-suresh/experiments-with-gpt2/blob/main/sentiment_classification/sentiment_classification.ipynb">sentiment classification</a> notebook.</p><table>
+<thead>
+<tr>
+<th align="left">Model/Method</th>
+<th align="right">accuracy</th>
+<th align="right">precision</th>
+<th align="right">recall</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">GPT-2 / Zero Shot</td>
+<td align="right">0.70784</td>
+<td align="right">0.83863</td>
+<td align="right">0.51472</td>
+</tr>
+<tr>
+<td align="left">GPT-2 / Fine-Tuned</td>
+<td align="right">0.92360</td>
+<td align="right">0.92923</td>
+<td align="right">0.91704</td>
+</tr>
+<tr>
+<td align="left">GPT-2 / Fine-Tuned(LoRA)</td>
+<td align="right">0.91068</td>
+<td align="right">0.89946</td>
+<td align="right">0.92472</td>
+</tr>
+<tr>
+<td align="left">BERT / Fine-Tuned</td>
+<td align="right">0.9150</td>
+<td align="right">0.9122</td>
+<td align="right">0.9076</td>
+</tr>
+<tr>
+<td align="left">BERT / Fine-Tuned(LoRA)</td>
+<td align="right">0.8855</td>
+<td align="right">0.8647</td>
+<td align="right">0.9034</td>
+</tr>
+</tbody>
+</table></section>
+
+		</article>
+		<footer>
+  <p class="social-links">
+    <a href="/"><span class="fas fa-home"></span></a>
+    
+    &nbsp
+    
+    
+    
+    
+    <a href="https://github.com/varun-suresh"><span class="fab fa-github-square"></span></a>
+    
+    <a href="https://linkedin.com/in/varun-suresh"><span class="fab fa-linkedin-square"></span></a>
+    <a href="mailto:fab.varun@gmail.com"><span class="fab fa-envelope-square"></span></a>
+    <a href="/feed.xml"><span class="fas fa-rss-square"></span></a>
+    &nbsp
+    
+    <a href="/search"><span class="fas fa-search"></span></a>
+  </p>
+</footer>
+  </body>
+</html>

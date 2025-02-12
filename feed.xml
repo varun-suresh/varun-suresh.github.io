@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+  <title>Varun Suresh</title>
+  <subtitle>Personal Website</subtitle>
+  <link href="varun-suresh.github.io/feed.xml" rel="self"/>
+  <link href="varun-suresh.github.io"/>
+  <updated>2024-12-24T00:00:00Z</updated>
+  <id>varun-suresh.github.io</id>
+  <author>
+    <name>Varun Suresh</name>
+    <email>fab.varun@gmail.com</email>
+  </author>
+  
+  <entry>
+    <title>undefined</title>
+    <link href="/posts/sentiment-classification-on-imdb-dataset/"/>
+    <updated>2024-11-30T00:00:00Z</updated>
+    <id>/posts/sentiment-classification-on-imdb-dataset/</id>
+    <content type="html">&lt;section&gt;&lt;h1 id=&quot;introduction&quot;&gt;Introduction&lt;/h1&gt;&lt;p&gt;What is sentiment classification?&lt;/p&gt;&lt;p&gt;Given a review, we want to classify this review as either positive or negative. For example, “The movie was incredible” should be classified as a positive review and “The performances were terrible” should be classified as negative. On a simple sentence, this is easy to do. However, reviews tend to be long and a lot of the times quite nuanced.&lt;/p&gt;&lt;p&gt;Sentiment classification is a well studied problem in Natural Language Processing. Large Language Models (LLMs) in the past few years have achieved excellent results in this area. In this post, I explore sentiment classification using &lt;a href=&quot;https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf&quot;&gt;GPT-2&lt;/a&gt; base model (124M) and &lt;a href=&quot;https://arxiv.org/pdf/1810.04805&quot;&gt;BERT&lt;/a&gt; base model (124M).&lt;/p&gt;&lt;h1 id=&quot;goal&quot;&gt;Goal&lt;/h1&gt;&lt;p&gt;Fine-tune GPT-2 and BERT with and without &lt;a href=&quot;https://arxiv.org/abs/2106.09685&quot;&gt;LoRA&lt;/a&gt; to do sentiment classification and benchmark their performance.&lt;/p&gt;&lt;h1 id=&quot;overview&quot;&gt;Overview&lt;/h1&gt;&lt;p&gt;Below is a brief overview of the data, GPT-2 and BERT. For both models, I used pre-trained weights from &lt;a href=&quot;https://huggingface.co/&quot;&gt;HuggingFace&lt;/a&gt; as the starting point and fine-tuned them for sentiment classification.&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;large-movie-review-dataset&quot;&gt;Large Movie Review Dataset&lt;/h2&gt;&lt;p&gt;This &lt;a href=&quot;https://ai.stanford.edu/~amaas/data/sentiment/&quot;&gt;dataset&lt;/a&gt; contains 50k movie reviews (25k training and 25k test). There are an equal number of positive and negative reviews in this dataset.&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;gpt-2&quot;&gt;GPT-2&lt;/h2&gt;&lt;p&gt;GPT-2 is a model from OpenAI trained for text generation i.e the model predicts the most probable next word given the previous words. For example&lt;/p&gt;&lt;pre&gt;&lt;code&gt;Once upon a
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;the most probable next word is &lt;code&gt;time&lt;/code&gt; and that is what GPT-2 would generate. The word after that will be conditioned on &lt;code&gt;Once upon a time&lt;/code&gt; and so on.The number of &quot;words&quot;(tokens) the model attends to before generating the next word is called the context window. The model uses causal self-attention, this means the model can only attend to words &lt;em&gt;before&lt;/em&gt; but not words that come after it.&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;bert&quot;&gt;BERT&lt;/h2&gt;&lt;p&gt;BERT is a model from Google and it was trained using the Masked Language Modeling(MLM) and Next Sentence Prediction (NSP) objectives. Given a sentence like&lt;/p&gt;&lt;pre&gt;&lt;code&gt;Once [MASK] a time
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;the model is trained to predict the word at the &lt;code&gt;[MASK]&lt;/code&gt; location. Unlike GPT-2, the model attends to words &lt;em&gt;before&lt;/em&gt; and &lt;em&gt;after&lt;/em&gt; the &lt;code&gt;[MASK]&lt;/code&gt; token to infer the most probable word.&lt;/p&gt;&lt;h1 id=&quot;experiments&quot;&gt;Experiments&lt;/h1&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;zero-shot-learning-with-gpt-2&quot;&gt;Zero Shot Learning with GPT-2&lt;/h2&gt;&lt;p&gt;Given a prompt like “Review: The movie was awesome! Sentiment:”, I compare the likelihood of the next token being “ Positive” and “ Negative” and classify the review.&lt;/p&gt;&lt;p&gt;I tried a few prompts and the results varied quite a lot. An additional space (&quot;Positive&quot; and &quot; Positive&quot;) results in different tokens and the model is quite sensitive to these prompts. Among the few prompts I tried, the one I used eventually had the best results.&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;fine-tuning-using-gpt-2&quot;&gt;Fine Tuning using GPT-2&lt;/h2&gt;&lt;p&gt;In this setting, I froze the Positional Embedding weights, Token Encoding weights and the first 10 transformer blocks. Instead of the language modeling head, I used a binary classification head (a fully-connected layer with just one output followed by a sigmoid to make the output between 0 and 1 where 0 is negative and 1 is positive). I used the binary cross entropy loss function.&lt;/p&gt;&lt;p&gt;Parameter count when fine-tuning:&lt;/p&gt;&lt;p&gt;Transformer Block Layer 11:&lt;/p&gt;&lt;pre&gt;&lt;code&gt;Query Weights = 768 * 768 + 768 (Embedding size = 768, Weights + Bias) = 590592
+Key Weights = 768 * 768 + 768
+Value Weights = 768 * 768 + 768 = 590592
+Layer Norm (2) = 768 * 2 (gamma and beta) * 2(2 layer norms in a transformer block) = 3072
+Feed Forward Weights 1 = 768 * (4*768) + 4*768 = 2362368
+Feed Forward Weights 2 = 4*768 *768 + 768 = 2360064
+
+Total = 7087872
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Binary Classification Head&lt;/p&gt;&lt;pre&gt;&lt;code&gt;Weights = 768 * 1
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;When finetuning, about 14M parameters are being modified (14M out of 124M).&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;fine-tuning-using-gpt-2-and-lora&quot;&gt;Fine Tuning using GPT-2 and LoRA&lt;/h2&gt;&lt;p&gt;When using LoRA, the pre-trained weights are unchanged. It introduces two matrices &lt;strong&gt;A&lt;/strong&gt; and &lt;strong&gt;B&lt;/strong&gt; whose product is added to the weight matrix. Let’s consider a concrete example:&lt;/p&gt;&lt;p&gt;Let W&lt;sub&gt;k&lt;/sub&gt; be a weights matrix. In this case, let’s consider the keys weight in a transformer block. The weights have the dimension 768 * 768 and the bias is a 768 dimensional tensor.&lt;/p&gt;&lt;p&gt;Instead of modifying this large matrix, we can write&lt;/p&gt;&lt;p&gt;&lt;span class=&quot;inlineMath&quot;&gt;&lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mtext&gt; &lt;/mtext&gt;&lt;msub&gt;&lt;mi&gt;W&lt;/mi&gt;&lt;mi&gt;k&lt;/mi&gt;&lt;/msub&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;msub&gt;&lt;mi&gt;W&lt;/mi&gt;&lt;mi&gt;k&lt;/mi&gt;&lt;/msub&gt;&lt;mo&gt;+&lt;/mo&gt;&lt;mi mathvariant=&quot;normal&quot;&gt;Δ&lt;/mi&gt;&lt;mi&gt;W&lt;/mi&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;&#92; W_k = W_k + &#92;Delta W&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;base&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.83333em;vertical-align:-0.15em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mspace&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathdefault&quot; style=&quot;margin-right:0.13889em;&quot;&gt;W&lt;/span&gt;&lt;span class=&quot;msupsub&quot;&gt;&lt;span class=&quot;vlist-t vlist-t2&quot;&gt;&lt;span class=&quot;vlist-r&quot;&gt;&lt;span class=&quot;vlist&quot; style=&quot;height:0.33610799999999996em;&quot;&gt;&lt;span style=&quot;top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;&quot;&gt;&lt;span class=&quot;pstrut&quot; style=&quot;height:2.7em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;sizing reset-size6 size3 mtight&quot;&gt;&lt;span class=&quot;mord mathdefault mtight&quot; style=&quot;margin-right:0.03148em;&quot;&gt;k&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;vlist-s&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;vlist-r&quot;&gt;&lt;span class=&quot;vlist&quot; style=&quot;height:0.15em;&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;mspace&quot; style=&quot;margin-right:0.2777777777777778em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mrel&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mspace&quot; style=&quot;margin-right:0.2777777777777778em;&quot;&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;base&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.83333em;vertical-align:-0.15em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathdefault&quot; style=&quot;margin-right:0.13889em;&quot;&gt;W&lt;/span&gt;&lt;span class=&quot;msupsub&quot;&gt;&lt;span class=&quot;vlist-t vlist-t2&quot;&gt;&lt;span class=&quot;vlist-r&quot;&gt;&lt;span class=&quot;vlist&quot; style=&quot;height:0.33610799999999996em;&quot;&gt;&lt;span style=&quot;top:-2.5500000000000003em;margin-left:-0.13889em;margin-right:0.05em;&quot;&gt;&lt;span class=&quot;pstrut&quot; style=&quot;height:2.7em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;sizing reset-size6 size3 mtight&quot;&gt;&lt;span class=&quot;mord mathdefault mtight&quot; style=&quot;margin-right:0.03148em;&quot;&gt;k&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;vlist-s&quot;&gt;​&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;vlist-r&quot;&gt;&lt;span class=&quot;vlist&quot; style=&quot;height:0.15em;&quot;&gt;&lt;span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;mspace&quot; style=&quot;margin-right:0.2222222222222222em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mbin&quot;&gt;+&lt;/span&gt;&lt;span class=&quot;mspace&quot; style=&quot;margin-right:0.2222222222222222em;&quot;&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;base&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.68333em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;Δ&lt;/span&gt;&lt;span class=&quot;mord mathdefault&quot; style=&quot;margin-right:0.13889em;&quot;&gt;W&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;&lt;span class=&quot;inlineMath&quot;&gt;&lt;span class=&quot;katex&quot;&gt;&lt;span class=&quot;katex-mathml&quot;&gt;&lt;math&gt;&lt;semantics&gt;&lt;mrow&gt;&lt;mtext&gt; &lt;/mtext&gt;&lt;mi mathvariant=&quot;normal&quot;&gt;Δ&lt;/mi&gt;&lt;mi&gt;W&lt;/mi&gt;&lt;mo&gt;=&lt;/mo&gt;&lt;mi&gt;A&lt;/mi&gt;&lt;msup&gt;&lt;mi&gt;B&lt;/mi&gt;&lt;mi&gt;T&lt;/mi&gt;&lt;/msup&gt;&lt;/mrow&gt;&lt;annotation encoding=&quot;application/x-tex&quot;&gt;&#92; &#92;Delta W = AB^T&lt;/annotation&gt;&lt;/semantics&gt;&lt;/math&gt;&lt;/span&gt;&lt;span class=&quot;katex-html&quot; aria-hidden=&quot;true&quot;&gt;&lt;span class=&quot;base&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.68333em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mspace&quot;&gt; &lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;Δ&lt;/span&gt;&lt;span class=&quot;mord mathdefault&quot; style=&quot;margin-right:0.13889em;&quot;&gt;W&lt;/span&gt;&lt;span class=&quot;mspace&quot; style=&quot;margin-right:0.2777777777777778em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mrel&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;mspace&quot; style=&quot;margin-right:0.2777777777777778em;&quot;&gt;&lt;/span&gt;&lt;/span&gt;&lt;span class=&quot;base&quot;&gt;&lt;span class=&quot;strut&quot; style=&quot;height:0.8413309999999999em;vertical-align:0em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;mord mathdefault&quot;&gt;A&lt;/span&gt;&lt;span class=&quot;mord&quot;&gt;&lt;span class=&quot;mord mathdefault&quot; style=&quot;margin-right:0.05017em;&quot;&gt;B&lt;/span&gt;&lt;span class=&quot;msupsub&quot;&gt;&lt;span class=&quot;vlist-t&quot;&gt;&lt;span class=&quot;vlist-r&quot;&gt;&lt;span class=&quot;vlist&quot; style=&quot;height:0.8413309999999999em;&quot;&gt;&lt;span style=&quot;top:-3.063em;margin-right:0.05em;&quot;&gt;&lt;span class=&quot;pstrut&quot; style=&quot;height:2.7em;&quot;&gt;&lt;/span&gt;&lt;span class=&quot;sizing reset-size6 size3 mtight&quot;&gt;&lt;span class=&quot;mord mathdefault mtight&quot; style=&quot;margin-right:0.13889em;&quot;&gt;T&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;/p&gt;&lt;p&gt;where &lt;strong&gt;A&lt;/strong&gt; and &lt;strong&gt;B&lt;/strong&gt; are two low rank matrices of dimension 768 × 8 . AB&lt;sup&gt;T&lt;/sup&gt; will result in a matrix of dimension 768 × 768, but the number of learned parameters are&lt;/p&gt;&lt;pre&gt;&lt;code&gt;768 * 8 * 2(A and B) * 2(Keys and Weights matrix) = 24576
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;significantly lower than ~7M parameters per transformer layer when fine tuning all the parameters.&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;fine-tuning-using-bert&quot;&gt;Fine Tuning using BERT&lt;/h2&gt;&lt;p&gt;Similar to GPT-2, I froze the embeddings and the first 10 layers of the transformer. I took the mean of the embeddings of all the tokens and added a binary classification head on top.&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;fine-tuning-using-bert--lora&quot;&gt;Fine Tuning using BERT + LoRA&lt;/h2&gt;&lt;p&gt;In this setting, I froze the first 10 layers of the transformer and only learn the LoRA parameters for the last two layers. The binary classification head is also learnt during the process.&lt;/p&gt;&lt;h1 id=&quot;results&quot;&gt;Results&lt;/h1&gt;&lt;p&gt;To reproduce these results, clone my &lt;a href=&quot;https://github.com/varun-suresh/experiments-with-gpt2/&quot;&gt;repository&lt;/a&gt; and run the &lt;a href=&quot;https://github.com/varun-suresh/experiments-with-gpt2/blob/main/sentiment_classification/sentiment_classification.ipynb&quot;&gt;sentiment classification&lt;/a&gt; notebook.&lt;/p&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th align=&quot;left&quot;&gt;Model/Method&lt;/th&gt;
+&lt;th align=&quot;right&quot;&gt;accuracy&lt;/th&gt;
+&lt;th align=&quot;right&quot;&gt;precision&lt;/th&gt;
+&lt;th align=&quot;right&quot;&gt;recall&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td align=&quot;left&quot;&gt;GPT-2 / Zero Shot&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.70784&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.83863&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.51472&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td align=&quot;left&quot;&gt;GPT-2 / Fine-Tuned&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.92360&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.92923&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.91704&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td align=&quot;left&quot;&gt;GPT-2 / Fine-Tuned(LoRA)&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.91068&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.89946&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.92472&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td align=&quot;left&quot;&gt;BERT / Fine-Tuned&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.9150&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.9122&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.9076&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td align=&quot;left&quot;&gt;BERT / Fine-Tuned(LoRA)&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.8855&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.8647&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.9034&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;&lt;/section&gt;
+</content>
+  </entry>
+  
+  <entry>
+    <title>undefined</title>
+    <link href="/posts/retrieval-augmented-generation/"/>
+    <updated>2024-12-24T00:00:00Z</updated>
+    <id>/posts/retrieval-augmented-generation/</id>
+    <content type="html">&lt;section&gt;&lt;h1 id=&quot;introduction&quot;&gt;Introduction&lt;/h1&gt;&lt;p&gt;What is retrieval augmented generation?&lt;/p&gt;&lt;p&gt;It is a paradigm where large language models (LLMs) answer queries based on certain context and reference documents. RAG is akin to a reading comprehension task, where models rely on external documents for answers, as opposed to generative models, which answer questions from memory. It is widely used in applications such as customer support chatbots and knowledge retrieval systems.&lt;/p&gt;&lt;p&gt;An overview of the RAG pipeline is shown in the figure below.
+&lt;img src=&quot;/assets/img/rag-overview.png&quot; alt=&quot;RAG overview&quot; /&gt;&lt;/p&gt;&lt;p&gt;Skip to the end if you want to see the demo!&lt;/p&gt;&lt;p&gt;The RAG pipeline consists of mainly 4 steps:&lt;/p&gt;&lt;ol&gt;
+&lt;li&gt;Encoding Knowledge: In this step, convert reference documents (Eg: A chapter from a textbook, blogpost) into
+dense embeddings using a language representation model like &lt;a href=&quot;https://arxiv.org/pdf/1810.04805&quot;&gt;BERT&lt;/a&gt;. More
+specifically, an embedding is created for N(2–3) overlapping sentences in the document. Sentences
+that mean something similar should be nearby in this embedding space and sentences that are completely unrelated to each
+other must be far away from each other in this embedding space.&lt;/li&gt;
+&lt;li&gt;Index: Create an index that stores vectors(embeddings) and exposes functions to quickly find the neighbors using a distance measure.&lt;/li&gt;
+&lt;li&gt;Retrieval: Given a query, convert it into an embedding and find the “K” nearest neighbors (most relevant to the
+query). If the reference document is 10 pages long for example, this step will find the top K (5) sentences in the
+document that might answer the query.&lt;/li&gt;
+&lt;li&gt;Generation: Using the retrieved sentences and the query, answer the query using a generative model like &lt;a href=&quot;https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf&quot;&gt;GPT-2&lt;/a&gt;&lt;/li&gt;
+&lt;/ol&gt;&lt;h1 id=&quot;goal&quot;&gt;Goal&lt;/h1&gt;&lt;p&gt;Create an end-to-end working RAG pipeline with small models with focus on inference speed and training speed so I can run the experiments quickly on my NVDIA GeForce GTX 1080 8GB GPU. All the code is on my &lt;a href=&quot;https://github.com/varun-suresh/experiments-with-gpt2/tree/main/rag&quot;&gt;github repo&lt;/a&gt;. I have jupyter notebooks, so it should be easy to reproduce these results.&lt;/p&gt;&lt;p&gt;Let’s go through the steps to create a RAG from scratch&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;encoding-knowledge&quot;&gt;Encoding knowledge&lt;/h2&gt;&lt;p&gt;In this context, a sentence refers to a contiguous sequence of words or characters.A sentence is a point represented by N-Dimensional vector i.e., any given sentence is represented by N floating point numbers. How do we come up with these N numbers for a sentence?&lt;/p&gt;&lt;h3 id=&quot;bert&quot;&gt;BERT&lt;/h3&gt;&lt;p&gt;Bidirectional Encoder Representations from Transformers is a language representation model. For each sentence, as shown in the figure below&lt;/p&gt;&lt;p&gt;&lt;img src=&quot;/assets/img/tokenization.png&quot; alt=&quot;Figure 2&quot; /&gt;&lt;/p&gt;&lt;p&gt;A special &lt;em&gt;CLS&lt;/em&gt; token is added at the beginning of the sentence. As the tokens go through the different layers of the transformer, their position in N-dimensional space is modified by tokens that appear before and after the current token within the context window size. &lt;a href=&quot;https://www.youtube.com/watch?v=eMlx5fFNoYc&quot;&gt;3Blue1Brown’s video&lt;/a&gt; explains this very nicely.&lt;/p&gt;&lt;p&gt;The last attention layer of the transformer has an N-dimensional embedding for each of the tokens in the input sentence including the &lt;em&gt;CLS&lt;/em&gt; token. One way to represent an entire sentence with a single embedding could be by using the embedding for the &lt;em&gt;CLS&lt;/em&gt; token. Another way could be by averaging all the embeddings for the sentence.&lt;/p&gt;&lt;p&gt;The BERT model, when finetuned on NLI tasks has shown impressive performance. However, to compare two sentences, they both must be input to the model at the same time with a special separator token [SEP] in between the two sentences. To check if a query is close to sentences in a document, we would have to run the BERT model M times for each query where M is the number of embeddings in the index. If a document contained 60k embeddings and model inference took 100ms, to answer a single query would take 1 hour and 40 minutes. This makes it unusable.&lt;/p&gt;&lt;h3 id=&quot;sentence-bert&quot;&gt;Sentence BERT&lt;/h3&gt;&lt;p&gt;&lt;a href=&quot;https://arxiv.org/pdf/1908.10084&quot;&gt;Sentence-BERT&lt;/a&gt; showed that the embeddings from pre-trained BERT did poorly on &lt;a href=&quot;https://huggingface.co/datasets/sentence-transformers/stsb&quot;&gt;semantic similarity tasks&lt;/a&gt;. They outlined a procedure to fine-tune BERT. The fine-tuned embeddings perform significantly better than the pre-trained BERT embeddings when calculating cosine similarity. Assuming that the embeddings for the document have already been calculated, for 60k embeddings, the K nearest neighbors can be found within 5 seconds(100ms to encode the query, ~4s to get the cosine distance from embeddings in the index).&lt;/p&gt;&lt;p&gt;&lt;img src=&quot;/assets/img/sentenceBERT.png&quot; alt=&quot;sentenceBERT&quot; /&gt;&lt;/p&gt;&lt;p&gt;Image Source: &lt;a href=&quot;https://arxiv.org/pdf/1908.10084&quot;&gt;https://arxiv.org/pdf/1908.10084&lt;/a&gt;&lt;/p&gt;&lt;p&gt;The architecture of Sentence BERT is as shown in the figure above. Sentences A(Embedding u) and B(Embedding v) are passed through the same network. The two embeddings u, v and absolute difference abs(u-v) is concatenated and a fully connected layer is used for classification. The NLI(Natural Language Inference) task is a 3 way classification task - Given two sentences, classify whether the second sentence is&lt;/p&gt;&lt;ol&gt;
+&lt;li&gt;Contradiction : The opposite of the first sentence.&lt;/li&gt;
+&lt;li&gt;Entailment: A continuation of the first sentence.&lt;/li&gt;
+&lt;li&gt;Neutral: Not related to the first sentence.&lt;/li&gt;
+&lt;/ol&gt;&lt;h3 id=&quot;natural-language-inference-tasks&quot;&gt;Natural Language Inference Tasks&lt;/h3&gt;&lt;p&gt;As suggested in the paper, I combined &lt;a href=&quot;https://nlp.stanford.edu/projects/snli/&quot;&gt;Stanford Natural Language Inference&lt;/a&gt; dataset and &lt;a href=&quot;https://cims.nyu.edu/~sbowman/multinli/&quot;&gt;MNLI&lt;/a&gt; to finetune Sentence BERT. There are a total of 1M samples with these two datasets combined. The code for this dataset is &lt;a href=&quot;https://github.com/varun-suresh/experiments-with-gpt2/blob/main/rag/snliDataset.py&quot;&gt;here&lt;/a&gt;&lt;/p&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th align=&quot;left&quot;&gt;Dataset&lt;/th&gt;
+&lt;th align=&quot;center&quot;&gt;Test Accuracy(%)&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td align=&quot;left&quot;&gt;SNLI&lt;/td&gt;
+&lt;td align=&quot;center&quot;&gt;82.24&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td align=&quot;left&quot;&gt;Multi NLI&lt;/td&gt;
+&lt;td align=&quot;center&quot;&gt;73.08&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;&lt;p&gt;Based on the benchmarks for &lt;a href=&quot;https://paperswithcode.com/sota/natural-language-inference-on-snli&quot;&gt;SNLI&lt;/a&gt; and &lt;a href=&quot;https://paperswithcode.com/sota/natural-language-inference-on-multinli&quot;&gt;MultiNLI&lt;/a&gt;, the performance of my fine-tuning seems about right.&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;semantic-textual-similarity-tasksstsb&quot;&gt;Semantic Textual Similarity Tasks(STSb)&lt;/h2&gt;&lt;p&gt;The goal of fine-tuning BERT is to make the embeddings for similar sentences to be “nearby” in a high dimensional space. The STS dataset consists of pairs of sentences and a score associated with it. The score is a number between -1 and 1. 1 implies that the sentences are similar, -1 means they are contradictory and 0 means they are unrelated.&lt;/p&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th align=&quot;left&quot;&gt;Model&lt;/th&gt;
+&lt;th align=&quot;center&quot;&gt;Spearman’s Rank Correlation coefficient&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td align=&quot;left&quot;&gt;BERT - CLS embedding&lt;/td&gt;
+&lt;td align=&quot;center&quot;&gt;0.2030&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td align=&quot;left&quot;&gt;Avg BERT Embeddings&lt;/td&gt;
+&lt;td align=&quot;center&quot;&gt;0.4693&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td align=&quot;left&quot;&gt;SBERT pretrained on SNLI&lt;/td&gt;
+&lt;td align=&quot;center&quot;&gt;0.7057&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td align=&quot;left&quot;&gt;SBERT pretrained on SNLI + MultiNLI&lt;/td&gt;
+&lt;td align=&quot;center&quot;&gt;0.7462&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;&lt;p&gt;The code to reproduce these results is &lt;a href=&quot;https://github.com/varun-suresh/experiments-with-gpt2/blob/main/rag/benchmark_sts.ipynb&quot;&gt;here&lt;/a&gt;&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;index&quot;&gt;Index&lt;/h2&gt;&lt;p&gt;I used &lt;a href=&quot;https://github.com/facebookresearch/faiss&quot;&gt;FAISS&lt;/a&gt; library. It stores the embeddings in an matrix in memory. During retrieval, the K nearest sentences (by L2 distance) to the query are retrieved.&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;retrieval&quot;&gt;Retrieval&lt;/h2&gt;&lt;p&gt;Suppose we have to read a long document and answer questions based on this document. After reading the question, we usually take a look at the document again to find what part of the document might contain the answer to the question.&lt;/p&gt;&lt;p&gt;For example, let’s say our document is as follows&lt;/p&gt;&lt;pre&gt;&lt;code&gt;New Delhi is the capital city of India. It has a population of about 33 million.
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;and the query is&lt;/p&gt;&lt;pre&gt;&lt;code&gt;What is India&#39;s capital city?
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;We know that the first sentence in our document is the most relevant to the query. The distance between the query and the first sentence should be smaller than the distance between the second sentence and the query.&lt;/p&gt;&lt;p&gt;In the retrieval step, the query is encoded and the K closest sentences to the query are returned.&lt;a href=&quot;https://github.com/varun-suresh/experiments-with-gpt2/blob/main/rag/rag.py#L26&quot;&gt;Link to code&lt;/a&gt;&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;generation&quot;&gt;Generation&lt;/h2&gt;&lt;p&gt;GPT-2 was trained using the Language Modeling objective, i.e given a list of words, predict the most probable next word. Initial attempts with pre-trained GPT-2 in the RAG pipeline resulted in incoherent outputs, likely due to its lack of specialized training for question answering tasks.&lt;/p&gt;&lt;h3 id=&quot;fine-tune-gpt-2-using-squad&quot;&gt;Fine-tune GPT-2 using SQuAD&lt;/h3&gt;&lt;p&gt;I fine-tuned the last 4 layers of GPT-2 using the &lt;a href=&quot;https://rajpurkar.github.io/SQuAD-explorer/&quot;&gt;Stanford Question Answering Dataset&lt;/a&gt;. The dataset contains reading comprehension tasks - it has a paragraph or so of context and questions and answers based on that paragraph.&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;putting-it-all-together---build-an-end-to-end-rag-pipeline&quot;&gt;Putting it all together - Build an end-to-end RAG pipeline&lt;/h2&gt;&lt;p&gt;Using the fine tuned BERT model (sentence BERT) for creating embeddings and the fine-tuned GPT-2, I built a RAG. The sentence BERT model creates embeddings for the document and adds to an index. When there is a query, the query is converted into an embedding using the same BERT model and the 5 nearest neighbors to the query embedding are retrieved.&lt;/p&gt;&lt;p&gt;As a final step, the 5 nearest neighbors are provided as context in addition to the query and GPT-2 generates a response.&lt;/p&gt;&lt;p&gt;&lt;em&gt;Pre-processing:&lt;/em&gt; Before running Sentence BERT, I split the document into sentences. Each embedding represents 2 sentences, and consecutive embeddings have a 1 sentence overlap. For example, let’s say my document looks like this&lt;/p&gt;&lt;pre&gt;&lt;code&gt;New Delhi is the capital city of India. It has a population of over 33 million. The winters there are cold and the summers are extremely hot.
+&lt;/code&gt;&lt;/pre&gt;&lt;pre&gt;&lt;code&gt;New Delhi is the capital city of India. It has a population of 33 million. -&gt; embedding
+It has a population of 33 million. The winters there are cold and the summers are extremely hot. -&gt; embedding
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;For the demo, I copied all the text from the &lt;a href=&quot;https://en.wikipedia.org/wiki/Tour_de_France&quot;&gt;Tour De France wikipedia page&lt;/a&gt; and used that as the knowledge base. I asked a few questions about the Tour De France and got responses from the RAG pipeline.&lt;/p&gt;&lt;pre&gt;&lt;code&gt;Query: Who was the first British rider to win the Tour de France?
+Response: Bradley Wiggins
+
+Query: How many stages has Mark Cavendish won?
+Response: 35th overall.
+
+Query: What color jersey does the winner of the general classification wear?
+Response: Yellow jersey
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;img src=&quot;/assets/img/rag.gif&quot; alt=&quot;Demo of a Retrieval Augmented Generation Pipeline&quot; /&gt;&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;results&quot;&gt;Results&lt;/h2&gt;&lt;p&gt;For all my experiments, I used the pre-trained BERT base model (124M parameters) and GPT-2 (124M parameters). The RAG demo shows questions answered reasonably correctly. There were questions for which GPT-2 gave factually incorrect and sometimes completely irrelevant answers.&lt;/p&gt;&lt;/section&gt;
+</content>
+  </entry>
+</feed>

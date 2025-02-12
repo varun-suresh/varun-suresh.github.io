@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+		<!-- Required meta tags -->
+
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<title>Varun Suresh</title>
+<meta name="author" content="" />
+<meta name="description" content="Personal Website">
+
+<link type="application/atom+xml" rel="alternate" href="varun-suresh.github.io/feed.xml" title="Varun Suresh">
+
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/tufte-css/et-book/et-book-roman-line-figures/et-book-roman-line-figures.woff" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/tufte-css/et-book/et-book-display-italic-old-style-figures/et-book-display-italic-old-style-figures.woff" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/tufte-css/et-book/et-book-bold-line-figures/et-book-bold-line-figures.woff" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/tufte-css/et-book/et-book-roman-old-style-figures/et-book-roman-old-style-figures.woff" />
+
+
+
+
+<link rel="stylesheet" href="/assets/main.css">
+<link rel="stylesheet" href="/assets/tufte-css/tufte.min.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/3434e84155.css">
+<!-- KaTeX Support -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"
+      integrity="sha384-wcIxkf4k558AjM3Yz3BBFQUbk/zgIYC2R0QpeeYb+TwlBVMrlgLqwRjRtGZiK7ww"
+      crossorigin="anonymous" />
+<script defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"
+        integrity="sha384-hIoBPJpTUs74ddyc4bFZSM1TVlQDA60VBbJS0oA934VSz82sBx1X7kSx2ATBDIyd"
+        crossorigin="anonymous"></script>
+<script defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
+        integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk"
+        crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+<!-- BibTeX Support -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/pcooksey/bibtex-js@1.0.0/src/bibtex_js.min.js"></script>
+<!-- Stylesheets -->
+<link rel="stylesheet" href="/assets/tufte.min.css" />
+<link rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" />
+  </head>
+  <body>
+		<article>
+		<h1>Retrieval Augmented Generation
+</h1>
+		<p class="subtitle">Building a RAG pipeline using BERT and GPT-2
+</p>
+				<section><h1 id="introduction">Introduction</h1><p>What is retrieval augmented generation?</p><p>It is a paradigm where large language models (LLMs) answer queries based on certain context and reference documents. RAG is akin to a reading comprehension task, where models rely on external documents for answers, as opposed to generative models, which answer questions from memory. It is widely used in applications such as customer support chatbots and knowledge retrieval systems.</p><p>An overview of the RAG pipeline is shown in the figure below.
+<img src="/assets/img/rag-overview.png" alt="RAG overview"></p><p>Skip to the end if you want to see the demo!</p><p>The RAG pipeline consists of mainly 4 steps:</p><ol>
+<li>Encoding Knowledge: In this step, convert reference documents (Eg: A chapter from a textbook, blogpost) into
+dense embeddings using a language representation model like <a href="https://arxiv.org/pdf/1810.04805">BERT</a>. More
+specifically, an embedding is created for N(2–3) overlapping sentences in the document. Sentences
+that mean something similar should be nearby in this embedding space and sentences that are completely unrelated to each
+other must be far away from each other in this embedding space.</li>
+<li>Index: Create an index that stores vectors(embeddings) and exposes functions to quickly find the neighbors using a distance measure.</li>
+<li>Retrieval: Given a query, convert it into an embedding and find the “K” nearest neighbors (most relevant to the
+query). If the reference document is 10 pages long for example, this step will find the top K (5) sentences in the
+document that might answer the query.</li>
+<li>Generation: Using the retrieved sentences and the query, answer the query using a generative model like <a href="https://cdn.openai.com/better-language-models/language_models_are_unsupervised_multitask_learners.pdf">GPT-2</a></li>
+</ol><h1 id="goal">Goal</h1><p>Create an end-to-end working RAG pipeline with small models with focus on inference speed and training speed so I can run the experiments quickly on my NVDIA GeForce GTX 1080 8GB GPU. All the code is on my <a href="https://github.com/varun-suresh/experiments-with-gpt2/tree/main/rag">github repo</a>. I have jupyter notebooks, so it should be easy to reproduce these results.</p><p>Let’s go through the steps to create a RAG from scratch</p></section>
+<section><h2 id="encoding-knowledge">Encoding knowledge</h2><p>In this context, a sentence refers to a contiguous sequence of words or characters.A sentence is a point represented by N-Dimensional vector i.e., any given sentence is represented by N floating point numbers. How do we come up with these N numbers for a sentence?</p><h3 id="bert">BERT</h3><p>Bidirectional Encoder Representations from Transformers is a language representation model. For each sentence, as shown in the figure below</p><p><img src="/assets/img/tokenization.png" alt="Figure 2"></p><p>A special <em>CLS</em> token is added at the beginning of the sentence. As the tokens go through the different layers of the transformer, their position in N-dimensional space is modified by tokens that appear before and after the current token within the context window size. <a href="https://www.youtube.com/watch?v=eMlx5fFNoYc">3Blue1Brown’s video</a> explains this very nicely.</p><p>The last attention layer of the transformer has an N-dimensional embedding for each of the tokens in the input sentence including the <em>CLS</em> token. One way to represent an entire sentence with a single embedding could be by using the embedding for the <em>CLS</em> token. Another way could be by averaging all the embeddings for the sentence.</p><p>The BERT model, when finetuned on NLI tasks has shown impressive performance. However, to compare two sentences, they both must be input to the model at the same time with a special separator token [SEP] in between the two sentences. To check if a query is close to sentences in a document, we would have to run the BERT model M times for each query where M is the number of embeddings in the index. If a document contained 60k embeddings and model inference took 100ms, to answer a single query would take 1 hour and 40 minutes. This makes it unusable.</p><h3 id="sentence-bert">Sentence BERT</h3><p><a href="https://arxiv.org/pdf/1908.10084">Sentence-BERT</a> showed that the embeddings from pre-trained BERT did poorly on <a href="https://huggingface.co/datasets/sentence-transformers/stsb">semantic similarity tasks</a>. They outlined a procedure to fine-tune BERT. The fine-tuned embeddings perform significantly better than the pre-trained BERT embeddings when calculating cosine similarity. Assuming that the embeddings for the document have already been calculated, for 60k embeddings, the K nearest neighbors can be found within 5 seconds(100ms to encode the query, ~4s to get the cosine distance from embeddings in the index).</p><p><img src="/assets/img/sentenceBERT.png" alt="sentenceBERT"></p><p>Image Source: <a href="https://arxiv.org/pdf/1908.10084">https://arxiv.org/pdf/1908.10084</a></p><p>The architecture of Sentence BERT is as shown in the figure above. Sentences A(Embedding u) and B(Embedding v) are passed through the same network. The two embeddings u, v and absolute difference abs(u-v) is concatenated and a fully connected layer is used for classification. The NLI(Natural Language Inference) task is a 3 way classification task - Given two sentences, classify whether the second sentence is</p><ol>
+<li>Contradiction : The opposite of the first sentence.</li>
+<li>Entailment: A continuation of the first sentence.</li>
+<li>Neutral: Not related to the first sentence.</li>
+</ol><h3 id="natural-language-inference-tasks">Natural Language Inference Tasks</h3><p>As suggested in the paper, I combined <a href="https://nlp.stanford.edu/projects/snli/">Stanford Natural Language Inference</a> dataset and <a href="https://cims.nyu.edu/~sbowman/multinli/">MNLI</a> to finetune Sentence BERT. There are a total of 1M samples with these two datasets combined. The code for this dataset is <a href="https://github.com/varun-suresh/experiments-with-gpt2/blob/main/rag/snliDataset.py">here</a></p><table>
+<thead>
+<tr>
+<th align="left">Dataset</th>
+<th align="center">Test Accuracy(%)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">SNLI</td>
+<td align="center">82.24</td>
+</tr>
+<tr>
+<td align="left">Multi NLI</td>
+<td align="center">73.08</td>
+</tr>
+</tbody>
+</table><p>Based on the benchmarks for <a href="https://paperswithcode.com/sota/natural-language-inference-on-snli">SNLI</a> and <a href="https://paperswithcode.com/sota/natural-language-inference-on-multinli">MultiNLI</a>, the performance of my fine-tuning seems about right.</p></section>
+<section><h2 id="semantic-textual-similarity-tasksstsb">Semantic Textual Similarity Tasks(STSb)</h2><p>The goal of fine-tuning BERT is to make the embeddings for similar sentences to be “nearby” in a high dimensional space. The STS dataset consists of pairs of sentences and a score associated with it. The score is a number between -1 and 1. 1 implies that the sentences are similar, -1 means they are contradictory and 0 means they are unrelated.</p><table>
+<thead>
+<tr>
+<th align="left">Model</th>
+<th align="center">Spearman’s Rank Correlation coefficient</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">BERT - CLS embedding</td>
+<td align="center">0.2030</td>
+</tr>
+<tr>
+<td align="left">Avg BERT Embeddings</td>
+<td align="center">0.4693</td>
+</tr>
+<tr>
+<td align="left">SBERT pretrained on SNLI</td>
+<td align="center">0.7057</td>
+</tr>
+<tr>
+<td align="left">SBERT pretrained on SNLI + MultiNLI</td>
+<td align="center">0.7462</td>
+</tr>
+</tbody>
+</table><p>The code to reproduce these results is <a href="https://github.com/varun-suresh/experiments-with-gpt2/blob/main/rag/benchmark_sts.ipynb">here</a></p></section>
+<section><h2 id="index">Index</h2><p>I used <a href="https://github.com/facebookresearch/faiss">FAISS</a> library. It stores the embeddings in an matrix in memory. During retrieval, the K nearest sentences (by L2 distance) to the query are retrieved.</p></section>
+<section><h2 id="retrieval">Retrieval</h2><p>Suppose we have to read a long document and answer questions based on this document. After reading the question, we usually take a look at the document again to find what part of the document might contain the answer to the question.</p><p>For example, let’s say our document is as follows</p><pre><code>New Delhi is the capital city of India. It has a population of about 33 million.
+</code></pre><p>and the query is</p><pre><code>What is India's capital city?
+</code></pre><p>We know that the first sentence in our document is the most relevant to the query. The distance between the query and the first sentence should be smaller than the distance between the second sentence and the query.</p><p>In the retrieval step, the query is encoded and the K closest sentences to the query are returned.<a href="https://github.com/varun-suresh/experiments-with-gpt2/blob/main/rag/rag.py#L26">Link to code</a></p></section>
+<section><h2 id="generation">Generation</h2><p>GPT-2 was trained using the Language Modeling objective, i.e given a list of words, predict the most probable next word. Initial attempts with pre-trained GPT-2 in the RAG pipeline resulted in incoherent outputs, likely due to its lack of specialized training for question answering tasks.</p><h3 id="fine-tune-gpt-2-using-squad">Fine-tune GPT-2 using SQuAD</h3><p>I fine-tuned the last 4 layers of GPT-2 using the <a href="https://rajpurkar.github.io/SQuAD-explorer/">Stanford Question Answering Dataset</a>. The dataset contains reading comprehension tasks - it has a paragraph or so of context and questions and answers based on that paragraph.</p></section>
+<section><h2 id="putting-it-all-together---build-an-end-to-end-rag-pipeline">Putting it all together - Build an end-to-end RAG pipeline</h2><p>Using the fine tuned BERT model (sentence BERT) for creating embeddings and the fine-tuned GPT-2, I built a RAG. The sentence BERT model creates embeddings for the document and adds to an index. When there is a query, the query is converted into an embedding using the same BERT model and the 5 nearest neighbors to the query embedding are retrieved.</p><p>As a final step, the 5 nearest neighbors are provided as context in addition to the query and GPT-2 generates a response.</p><p><em>Pre-processing:</em> Before running Sentence BERT, I split the document into sentences. Each embedding represents 2 sentences, and consecutive embeddings have a 1 sentence overlap. For example, let’s say my document looks like this</p><pre><code>New Delhi is the capital city of India. It has a population of over 33 million. The winters there are cold and the summers are extremely hot.
+</code></pre><pre><code>New Delhi is the capital city of India. It has a population of 33 million. -> embedding
+It has a population of 33 million. The winters there are cold and the summers are extremely hot. -> embedding
+</code></pre><p>For the demo, I copied all the text from the <a href="https://en.wikipedia.org/wiki/Tour_de_France">Tour De France wikipedia page</a> and used that as the knowledge base. I asked a few questions about the Tour De France and got responses from the RAG pipeline.</p><pre><code>Query: Who was the first British rider to win the Tour de France?
+Response: Bradley Wiggins
+
+Query: How many stages has Mark Cavendish won?
+Response: 35th overall.
+
+Query: What color jersey does the winner of the general classification wear?
+Response: Yellow jersey
+</code></pre><p><img src="/assets/img/rag.gif" alt="Demo of a Retrieval Augmented Generation Pipeline"></p></section>
+<section><h2 id="results">Results</h2><p>For all my experiments, I used the pre-trained BERT base model (124M parameters) and GPT-2 (124M parameters). The RAG demo shows questions answered reasonably correctly. There were questions for which GPT-2 gave factually incorrect and sometimes completely irrelevant answers.</p></section>
+
+		</article>
+		<footer>
+  <p class="social-links">
+    <a href="/"><span class="fas fa-home"></span></a>
+    
+    &nbsp
+    
+    
+    
+    
+    <a href="https://github.com/varun-suresh"><span class="fab fa-github-square"></span></a>
+    
+    <a href="https://linkedin.com/in/varun-suresh"><span class="fab fa-linkedin-square"></span></a>
+    <a href="mailto:fab.varun@gmail.com"><span class="fab fa-envelope-square"></span></a>
+    <a href="/feed.xml"><span class="fas fa-rss-square"></span></a>
+    &nbsp
+    
+    <a href="/search"><span class="fas fa-search"></span></a>
+  </p>
+</footer>
+  </body>
+</html>
