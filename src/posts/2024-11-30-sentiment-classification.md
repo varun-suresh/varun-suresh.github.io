@@ -23,7 +23,7 @@ Below is a brief overview of the data, GPT-2 and BERT. For both models, I used p
 
 ## Large Movie Review Dataset
 
-This [dataset](https://ai.stanford.edu/~amaas/data/sentiment/) contains 50k movie reviews (25k training and 25k test). There are an equal number of positive and negative reviews in this dataset
+This [dataset](https://ai.stanford.edu/~amaas/data/sentiment/) contains 50k movie reviews (25k training and 25k test). There are an equal number of positive and negative reviews in this dataset.
 
 ## GPT-2
 
