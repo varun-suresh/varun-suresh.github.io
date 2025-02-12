@@ -40,6 +40,7 @@ jobs:
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
+          branch: main
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./_site # default: public
+          publish_dir: ./dist # default: public
           keep_files: false # replace all files
