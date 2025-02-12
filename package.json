@@ -18,9 +18,9 @@
   },
   "repository": {
     "type": "git",
-    "url": "http://github.com/nerdhaus/eleventufte"
+    "url": "http://github.com/varun-suresh/varun-suresh.github.io"
   },
-  "author": "Jeff Eaton",
+  "author": "Varun Suresh",
   "license": "MIT",
   "dependencies": {
     "@11ty/eleventy": "^3.0.0",
