@@ -11,7 +11,7 @@ I have been writing Python for many years now, it is by far the most intuitive p
 
 In this post, I want to explore some of these gotchas and hopefully understand implementations in python better than I did before.
 
-# Pass by object reference
+## Pass by object reference
 
 Consider the following functions
 
@@ -63,7 +63,7 @@ Although we are _re-assigning_ x, the `x` re-assigned in the function [^object-r
 
 [^object-ref]: {-} To learn more about python's object reference, you can read this [post on geeksforgeeks](https://www.geeksforgeeks.org/is-python-call-by-reference-or-call-by-value/)
 
-# List implementation
+## List implementation
 
 In Python, a list is implemented as a dynamic array. A contiguous block of memory is initially assigned to a list. If the size of the list exceeds this size, a new block that is `k` times the original size is assigned where k > 1. Adding a new element to an array is a O(1) operation amortized. When an element added to the list causes the list size to increase, all the elements in the list need to be copied to this new block of memory making it a O(n) time complexity operation.
 
