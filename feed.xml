@@ -4,7 +4,7 @@
   <subtitle>Personal Website</subtitle>
   <link href="varun-suresh.github.io/feed.xml" rel="self"/>
   <link href="varun-suresh.github.io"/>
-  <updated>2024-12-24T00:00:00Z</updated>
+  <updated>2025-02-15T00:00:00Z</updated>
   <id>varun-suresh.github.io</id>
   <author>
     <name>Varun Suresh</name>
@@ -166,5 +166,73 @@ Response: Yellow jersey
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;&lt;img src=&quot;/assets/img/rag.gif&quot; alt=&quot;Demo of a Retrieval Augmented Generation Pipeline&quot; /&gt;&lt;/p&gt;&lt;/section&gt;
 &lt;section&gt;&lt;h2 id=&quot;results&quot;&gt;Results&lt;/h2&gt;&lt;p&gt;For all my experiments, I used the pre-trained BERT base model (124M parameters) and GPT-2 (124M parameters). The RAG demo shows questions answered reasonably correctly. There were questions for which GPT-2 gave factually incorrect and sometimes completely irrelevant answers.&lt;/p&gt;&lt;/section&gt;
 </content>
+  </entry>
+  
+  <entry>
+    <title>undefined</title>
+    <link href="/posts/training-a-resnet-on-cifar-10/"/>
+    <updated>2025-01-12T00:00:00Z</updated>
+    <id>/posts/training-a-resnet-on-cifar-10/</id>
+    <content type="html">&lt;section&gt;
+&lt;/section&gt;</content>
+  </entry>
+  
+  <entry>
+    <title>undefined</title>
+    <link href="/posts/python-musings/"/>
+    <updated>2025-02-15T00:00:00Z</updated>
+    <id>/posts/python-musings/</id>
+    <content type="html">&lt;section&gt;&lt;h1 id=&quot;introduction&quot;&gt;Introduction&lt;/h1&gt;
+&lt;p&gt;I have been writing Python for many years now, it is by far the most intuitive programming language I have used. However, every once in a while something seemingly obvious does not work as I’d expect.&lt;/p&gt;
+&lt;p&gt;In this post, I want to explore some of these gotchas and hopefully understand implementations in python better than I did before.&lt;/p&gt;
+&lt;h1 id=&quot;pass-by-object-reference&quot;&gt;Pass by object reference&lt;/h1&gt;
+&lt;p&gt;Consider the following functions&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;from typing import List
+def modify(x:int):
+    x+= 1
+
+def modify_list(x:List):
+    x.append(1)
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The function &lt;code&gt;modify&lt;/code&gt;takes in an integer x, modifies it &lt;em&gt;in-place&lt;/em&gt; by adding 1. When I execute the following lines,&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;x=5
+modify(x)
+print(x)
+
+5
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The value of x is unchanged although the operation we did was &lt;strong&gt;in-place&lt;/strong&gt;.&lt;/p&gt;
+&lt;p&gt;However, when I run &lt;code&gt;modify_list&lt;/code&gt;, the list is now updated.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;x = [1,2,3]
+modify_list(x)
+print(x)
+
+[1,2,3,1]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;When a mutable object like a list or a dictionary is passed to a function, it is passed by reference. If the object is modified, the change is reflected outside the function as well. When an immutable object like an integer or tuple is passed to a function, it is equivalent to passing by value.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;def modify_list(x:List):
+    x.append(5)
+    x = [1,2]
+x = [3,4]
+modify_list(x)
+print(x)
+
+[3,4,5]
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Although we are &lt;em&gt;re-assigning&lt;/em&gt; x, the &lt;code&gt;x&lt;/code&gt; re-assigned in the function is in an entirely different memory location and its scope is only within the &lt;code&gt;modify_list&lt;/code&gt; function.&lt;/p&gt;
+&lt;h1 id=&quot;list-implementation&quot;&gt;List implementation&lt;/h1&gt;
+&lt;p&gt;In Python, a list is implemented as a dynamic array. A contiguous block of memory is initially assigned to a list. If the size of the list exceeds this size, a new block that is &lt;code&gt;k&lt;/code&gt; times the original size is assigned where k &gt; 1. Adding a new element to an array is a O(1) operation amortized. When an element added to the list causes the list size to increase, all the elements in the list need to be copied to this new block of memory making it a O(n) time complexity operation.&lt;/p&gt;
+&lt;p&gt;How are the elements of an list &lt;em&gt;actually&lt;/em&gt; stored? Note that not all elements in an array need to be of the same type and each element could take up different amounts of memory as in the example below.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;import sys
+x = [1,2,3]
+print(sys.getsizeof(x))
+x = [1,2,&quot;Very long block of text&quot;]
+print(sys.getsizeof(x))
+
+88
+88
+&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The result is the same in both cases, even though &lt;code&gt;Very long block of text&lt;/code&gt; should take up more bytes that &lt;code&gt;3&lt;/code&gt;. That is because only the references (address of the memory location + offset) to the elements are stored in the list. It is not that all the elements in the list are stored in contiguous locations (like in C, C++ arrays), but their references are stored sequentially.&lt;/p&gt;
+&lt;/section&gt;</content>
   </entry>
 </feed>

@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+  <head>
+		<!-- Required meta tags -->
+
+
+
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<title>Varun Suresh</title>
+<meta name="author" content="" />
+<meta name="description" content="Personal Website">
+
+<link type="application/atom+xml" rel="alternate" href="varun-suresh.github.io/feed.xml" title="Varun Suresh">
+
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/tufte-css/et-book/et-book-roman-line-figures/et-book-roman-line-figures.woff" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/tufte-css/et-book/et-book-display-italic-old-style-figures/et-book-display-italic-old-style-figures.woff" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/tufte-css/et-book/et-book-bold-line-figures/et-book-bold-line-figures.woff" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/assets/tufte-css/et-book/et-book-roman-old-style-figures/et-book-roman-old-style-figures.woff" />
+
+
+
+
+<link rel="stylesheet" href="/assets/main.css">
+<link rel="stylesheet" href="/assets/tufte-css/tufte.min.css">
+<link rel="stylesheet" href="https://use.fontawesome.com/3434e84155.css">
+<!-- KaTeX Support -->
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css"
+      integrity="sha384-wcIxkf4k558AjM3Yz3BBFQUbk/zgIYC2R0QpeeYb+TwlBVMrlgLqwRjRtGZiK7ww"
+      crossorigin="anonymous" />
+<script defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"
+        integrity="sha384-hIoBPJpTUs74ddyc4bFZSM1TVlQDA60VBbJS0oA934VSz82sBx1X7kSx2ATBDIyd"
+        crossorigin="anonymous"></script>
+<script defer
+        src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
+        integrity="sha384-43gviWU0YVjaDtb/GhzOouOXtZMP/7XUzwPTstBeZFe/+rCMvRwr4yROQP43s0Xk"
+        crossorigin="anonymous"
+        onload="renderMathInElement(document.body);"></script>
+<!-- BibTeX Support -->
+<script type="text/javascript" src="https://cdn.jsdelivr.net/gh/pcooksey/bibtex-js@1.0.0/src/bibtex_js.min.js"></script>
+<!-- Stylesheets -->
+<link rel="stylesheet" href="/assets/tufte.min.css" />
+<link rel="stylesheet"
+      href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" />
+  </head>
+  <body>
+		<article>
+		<h1>Python Musings
+</h1>
+		<p class="subtitle">Exploring and understanding the internal workings of python
+</p>
+				<section><h1 id="introduction">Introduction</h1>
+<p>I have been writing Python for many years now, it is by far the most intuitive programming language I have used. However, every once in a while something seemingly obvious does not work as I’d expect.</p>
+<p>In this post, I want to explore some of these gotchas and hopefully understand implementations in python better than I did before.</p>
+<h1 id="pass-by-object-reference">Pass by object reference</h1>
+<p>Consider the following functions</p>
+<pre><code>from typing import List
+def modify(x:int):
+    x+= 1
+
+def modify_list(x:List):
+    x.append(1)
+</code></pre>
+<p>The function <code>modify</code>takes in an integer x, modifies it <em>in-place</em> by adding 1. When I execute the following lines,</p>
+<pre><code>x=5
+modify(x)
+print(x)
+
+5
+</code></pre>
+<p>The value of x is unchanged although the operation we did was <strong>in-place</strong>.</p>
+<p>However, when I run <code>modify_list</code>, the list is now updated.</p>
+<pre><code>x = [1,2,3]
+modify_list(x)
+print(x)
+
+[1,2,3,1]
+</code></pre>
+<p>When a mutable object like a list or a dictionary is passed to a function, it is passed by reference. If the object is modified, the change is reflected outside the function as well. When an immutable object like an integer or tuple is passed to a function, it is equivalent to passing by value.</p>
+<pre><code>def modify_list(x:List):
+    x.append(5)
+    x = [1,2]
+x = [3,4]
+modify_list(x)
+print(x)
+
+[3,4,5]
+</code></pre>
+<p>Although we are <em>re-assigning</em> x, the <code>x</code> re-assigned in the function is in an entirely different memory location and its scope is only within the <code>modify_list</code> function.</p>
+<h1 id="list-implementation">List implementation</h1>
+<p>In Python, a list is implemented as a dynamic array. A contiguous block of memory is initially assigned to a list. If the size of the list exceeds this size, a new block that is <code>k</code> times the original size is assigned where k > 1. Adding a new element to an array is a O(1) operation amortized. When an element added to the list causes the list size to increase, all the elements in the list need to be copied to this new block of memory making it a O(n) time complexity operation.</p>
+<p>How are the elements of an list <em>actually</em> stored? Note that not all elements in an array need to be of the same type and each element could take up different amounts of memory as in the example below.</p>
+<pre><code>import sys
+x = [1,2,3]
+print(sys.getsizeof(x))
+x = [1,2,"Very long block of text"]
+print(sys.getsizeof(x))
+
+88
+88
+</code></pre>
+<p>The result is the same in both cases, even though <code>Very long block of text</code> should take up more bytes that <code>3</code>. That is because only the references (address of the memory location + offset) to the elements are stored in the list. It is not that all the elements in the list are stored in contiguous locations (like in C, C++ arrays), but their references are stored sequentially.</p>
+</section>
+		</article>
+		<footer>
+  <p class="social-links">
+    <a href="/"><span class="fas fa-home"></span></a>
+    
+    &nbsp
+    
+    
+    
+    
+    <a href="https://github.com/varun-suresh"><span class="fab fa-github-square"></span></a>
+    
+    <a href="https://linkedin.com/in/varun-suresh"><span class="fab fa-linkedin-square"></span></a>
+    <a href="mailto:fab.varun@gmail.com"><span class="fab fa-envelope-square"></span></a>
+    <a href="/feed.xml"><span class="fas fa-rss-square"></span></a>
+    &nbsp
+    
+    <a href="/search"><span class="fas fa-search"></span></a>
+  </p>
+</footer>
+  </body>
+</html>
