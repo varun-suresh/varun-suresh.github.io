@@ -59,17 +59,17 @@ print(x)
 [3,4,5]
 ```
 
-Although we are _re-assigning_ x, the `x` re-assigned in the function is in an entirely different memory location and its scope is only within the `modify_list` function.
+Although we are _re-assigning_ x, the `x` re-assigned in the function [^object-ref]is in an entirely different memory location and its scope is only within the `modify_list` function.
 
-[^autogram]: {-} To learn more about python's object reference, you can read this [post on geeksforgeeks](https://www.geeksforgeeks.org/is-python-call-by-reference-or-call-by-value/)
+[^object-ref]: {-} To learn more about python's object reference, you can read this [post on geeksforgeeks](https://www.geeksforgeeks.org/is-python-call-by-reference-or-call-by-value/)
 
 # List implementation
 
 In Python, a list is implemented as a dynamic array. A contiguous block of memory is initially assigned to a list. If the size of the list exceeds this size, a new block that is `k` times the original size is assigned where k > 1. Adding a new element to an array is a O(1) operation amortized. When an element added to the list causes the list size to increase, all the elements in the list need to be copied to this new block of memory making it a O(n) time complexity operation.
 
-[^autogram]: {-} For example, a list like x = [1,2,3,"randomstring",5.3] is a valid list.
+[^listexample]: {-} For example, a list like x = [1,2,3,"randomstring",5.3] is a valid list.
 
-How are the elements of an list _actually_ stored? Note that not all elements in an array need to be of the same type and each element could take up different amounts of memory as in the example below.
+How are the elements of an list _actually_ stored? Note that not all elements in an array need to be of the same type[^listexample] and each element could take up different amounts of memory as in the example below.
 
 ```
 import sys
