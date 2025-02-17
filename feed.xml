@@ -173,8 +173,31 @@ Response: Yellow jersey
     <link href="/posts/training-a-resnet-on-cifar-10/"/>
     <updated>2025-01-12T00:00:00Z</updated>
     <id>/posts/training-a-resnet-on-cifar-10/</id>
-    <content type="html">&lt;section&gt;
-&lt;/section&gt;</content>
+    <content type="html">&lt;section&gt;&lt;h2 id=&quot;introduction&quot;&gt;Introduction&lt;/h2&gt;&lt;p&gt;&lt;a href=&quot;https://arxiv.org/pdf/1512.03385&quot;&gt;ResNet&lt;/a&gt; is a very popular convolutional neural network architecture introduced in 2015. This paper was one of the first to successfully train extremely deep neural networks. They did it using a residual block, where an identity connection is added after two layers of convolution as shown in Figure 1.
+&lt;img src=&quot;/assets/img/residualBlock.png&quot; alt=&quot;Residual Block in ResNet&quot; /&gt;&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;code&quot;&gt;Code&lt;/h2&gt;&lt;p&gt;I implemented ResNet using PyTorch and the training code is &lt;a href=&quot;https://github.com/varun-suresh/experiments-with-gpt2/blob/main/vision_models/train.py#L6&quot;&gt;here&lt;/a&gt;. I chose CIFAR-10 because training can be done on a single 8GB GPU in about 20–30 minutes.&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;results&quot;&gt;Results&lt;/h2&gt;&lt;table&gt;
+&lt;thead&gt;
+&lt;tr&gt;
+&lt;th align=&quot;left&quot;&gt;Model&lt;/th&gt;
+&lt;th align=&quot;right&quot;&gt;No of Params&lt;/th&gt;
+&lt;th align=&quot;right&quot;&gt;Test Error&lt;/th&gt;
+&lt;/tr&gt;
+&lt;/thead&gt;
+&lt;tbody&gt;
+&lt;tr&gt;
+&lt;td align=&quot;left&quot;&gt;ResNet-20&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.27M&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;8.73%&lt;/td&gt;
+&lt;/tr&gt;
+&lt;tr&gt;
+&lt;td align=&quot;left&quot;&gt;ResNet-56&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;0.85M&lt;/td&gt;
+&lt;td align=&quot;right&quot;&gt;7.13%&lt;/td&gt;
+&lt;/tr&gt;
+&lt;/tbody&gt;
+&lt;/table&gt;&lt;p&gt;&lt;img src=&quot;/assets/img/resnetPlot.png&quot; alt=&quot;Plot showing the test error as the training progresses&quot; /&gt;&lt;/p&gt;&lt;/section&gt;
+</content>
   </entry>
   
   <entry>

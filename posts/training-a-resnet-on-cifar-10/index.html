@@ -50,9 +50,33 @@
 		<article>
 		<h1>Training a ResNet on CIFAR-10
 </h1>
-		
-				<section>
-</section>
+		<p class="subtitle">Reproduce the results for ResNet on the CIFAR-10 dataset
+</p>
+				<section><h2 id="introduction">Introduction</h2><p><a href="https://arxiv.org/pdf/1512.03385">ResNet</a> is a very popular convolutional neural network architecture introduced in 2015. This paper was one of the first to successfully train extremely deep neural networks. They did it using a residual block, where an identity connection is added after two layers of convolution as shown in Figure 1.
+<img src="/assets/img/residualBlock.png" alt="Residual Block in ResNet"></p></section>
+<section><h2 id="code">Code</h2><p>I implemented ResNet using PyTorch and the training code is <a href="https://github.com/varun-suresh/experiments-with-gpt2/blob/main/vision_models/train.py#L6">here</a>. I chose CIFAR-10 because training can be done on a single 8GB GPU in about 20–30 minutes.</p></section>
+<section><h2 id="results">Results</h2><table>
+<thead>
+<tr>
+<th align="left">Model</th>
+<th align="right">No of Params</th>
+<th align="right">Test Error</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">ResNet-20</td>
+<td align="right">0.27M</td>
+<td align="right">8.73%</td>
+</tr>
+<tr>
+<td align="left">ResNet-56</td>
+<td align="right">0.85M</td>
+<td align="right">7.13%</td>
+</tr>
+</tbody>
+</table><p><img src="/assets/img/resnetPlot.png" alt="Plot showing the test error as the training progresses"></p></section>
+
 		</article>
 		<footer>
   <p class="social-links">
