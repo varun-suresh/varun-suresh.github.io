@@ -1,6 +1,6 @@
 ---
-title: Projects
-permalink: /projects/
+title: Posts
+permalink: /posts/
 ---
 
 {% for p in collections.posts | reverse %}
