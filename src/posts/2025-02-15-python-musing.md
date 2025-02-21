@@ -24,7 +24,7 @@ def modify_list(x:List):
     x.append(1)
 ```
 
-The function `modify`takes in an integer x, modifies it _in-place_ by adding 1. When I execute the following lines,
+The function `modify` takes in an integer x, modifies it _in-place_ by adding 1. When I execute the following lines,
 
 ```
 x=5
@@ -62,6 +62,46 @@ print(x)
 Although we are _re-assigning_ x, the `x` re-assigned in the function[^objectref] is in an entirely different memory location and its scope is only within the `modify_list` function.
 
 [^objectref]: {-} To learn more about python's object reference, you can read this [post on geeksforgeeks](https://www.geeksforgeeks.org/is-python-call-by-reference-or-call-by-value/)
+
+## Mutable default arguments
+
+TL;DR - **Do not** use mutable objects as default arguments for a function.[^mutabledefault]
+
+[^mutabledefault]: {-} A [post](https://florimond.dev/en/posts/2018/08/python-mutable-defaults-are-the-source-of-all-evil) with a simpler example and a story of using mutable objects as a default argument in a function.
+
+Consider the following implementation
+
+```
+from typing import Dict
+class TrieNode:
+    def __init__(self, val:str,children:Dict[str,"Node"]={}) -> None:
+        self.val = val
+        self.children = children
+
+node_1 = TrieNode("a")
+node_2 = TrieNode("b")
+
+node_1.children["c"] = TrieNode("c")
+print(node_1.children.keys()) # Expect [c]
+print(node_2.children.keys()) # Expect [] but get [c]
+```
+
+Although `node_1` and `node_2` are separate instantiations of the class `TrieNode`, they share the `children` attribute. The children attribute for both instances point to the same memory location because of the mutable dictionary object as a default argument in `__init__`.
+
+The correct implementation would be as follows.
+
+```
+from typing import Dict, Optional
+class TrieNode:
+    def __init__(self, val:str,children:Optional[Dict[str,"Node"]]=None) -> None:
+        self.val = val
+        if children:
+            self.children = children
+        else:
+            self.children = {}
+```
+
+In this implementation, the children attribute is initialized inside the class, so for every instantiation of this class, the `children` will be saved in a separate location.
 
 ## List implementation
 
