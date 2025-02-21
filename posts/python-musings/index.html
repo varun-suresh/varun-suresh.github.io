@@ -59,7 +59,7 @@ def modify(x:int):
 
 def modify_list(x:List):
     x.append(1)
-</code></pre><p>The function <code>modify</code>takes in an integer x, modifies it <em>in-place</em> by adding 1. When I execute the following lines,</p><pre><code>x=5
+</code></pre><p>The function <code>modify</code> takes in an integer x, modifies it <em>in-place</em> by adding 1. When I execute the following lines,</p><pre><code>x=5
 modify(x)
 print(x)
 
@@ -78,6 +78,27 @@ print(x)
 
 [3,4,5]
 </code></pre><p>Although we are <em>re-assigning</em> x, the <code>x</code> re-assigned in the function<label for="md-to-learn-more-about" class="margin-toggle ">&#8853;</label><input type="checkbox" id="md-to-learn-more-about" class="margin-toggle" /><span class="marginnote">To learn more about python’s object reference, you can read this <a href="https://www.geeksforgeeks.org/is-python-call-by-reference-or-call-by-value/">post on geeksforgeeks</a></span> is in an entirely different memory location and its scope is only within the <code>modify_list</code> function.</p></section>
+<section><h2 id="mutable-default-arguments">Mutable default arguments</h2><p>TL;DR - <strong>Do not</strong> use mutable objects as default arguments for a function.<label for="md-a-less-than-a-href" class="margin-toggle ">&#8853;</label><input type="checkbox" id="md-a-less-than-a-href" class="margin-toggle" /><span class="marginnote">A <a href="https://florimond.dev/en/posts/2018/08/python-mutable-defaults-are-the-source-of-all-evil">post</a> with a simpler example and a story of using mutable objects as a default argument in a function.</span></p><p>Consider the following implementation</p><pre><code>from typing import Dict
+class TrieNode:
+    def __init__(self, val:str,children:Dict[str,"Node"]={}) -> None:
+        self.val = val
+        self.children = children
+
+node_1 = TrieNode("a")
+node_2 = TrieNode("b")
+
+node_1.children["c"] = TrieNode("c")
+print(node_1.children.keys()) # Expect [c]
+print(node_2.children.keys()) # Expect [] but get [c]
+</code></pre><p>Although <code>node_1</code> and <code>node_2</code> are separate instantiations of the class <code>TrieNode</code>, they share the <code>children</code> attribute. The children attribute for both instances point to the same memory location because of the mutable dictionary object as a default argument in <code>__init__</code>.</p><p>The correct implementation would be as follows.</p><pre><code>from typing import Dict, Optional
+class TrieNode:
+    def __init__(self, val:str,children:Optional[Dict[str,"Node"]]=None) -> None:
+        self.val = val
+        if children:
+            self.children = children
+        else:
+            self.children = {}
+</code></pre><p>In this implementation, the children attribute is initialized inside the class, so for every instantiation of this class, the <code>children</code> will be saved in a separate location.</p></section>
 <section><h2 id="list-implementation">List implementation</h2><p>In Python, a list is implemented as a dynamic array. A contiguous block of memory is initially assigned to a list. If the size of the list exceeds this size, a new block that is <code>k</code> times the original size is assigned where k > 1. Adding a new element to an array is a O(1) operation amortized. When an element added to the list causes the list size to increase, all the elements in the list need to be copied to this new block of memory making it a O(n) time complexity operation.</p><p>How are the elements of an list <em>actually</em> stored? Note that not all elements in an array need to be of the same type and each<label for="md-for-example-a-list" class="margin-toggle ">&#8853;</label><input type="checkbox" id="md-for-example-a-list" class="margin-toggle" /><span class="marginnote">For example, a list like <code>x = [1,2,3,"randomstring",5.3]</code> is a valid list.</span>element could take up different amounts of memory as in the example below.</p><pre><code>import sys
 x = [1,2,3]
 print(sys.getsizeof(x))

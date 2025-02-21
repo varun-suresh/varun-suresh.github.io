@@ -213,7 +213,7 @@ def modify(x:int):
 
 def modify_list(x:List):
     x.append(1)
-&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The function &lt;code&gt;modify&lt;/code&gt;takes in an integer x, modifies it &lt;em&gt;in-place&lt;/em&gt; by adding 1. When I execute the following lines,&lt;/p&gt;&lt;pre&gt;&lt;code&gt;x=5
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;The function &lt;code&gt;modify&lt;/code&gt; takes in an integer x, modifies it &lt;em&gt;in-place&lt;/em&gt; by adding 1. When I execute the following lines,&lt;/p&gt;&lt;pre&gt;&lt;code&gt;x=5
 modify(x)
 print(x)
 
@@ -232,6 +232,27 @@ print(x)
 
 [3,4,5]
 &lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Although we are &lt;em&gt;re-assigning&lt;/em&gt; x, the &lt;code&gt;x&lt;/code&gt; re-assigned in the function&lt;label for=&quot;md-to-learn-more-about&quot; class=&quot;margin-toggle &quot;&gt;&amp;#8853;&lt;/label&gt;&lt;input type=&quot;checkbox&quot; id=&quot;md-to-learn-more-about&quot; class=&quot;margin-toggle&quot; /&gt;&lt;span class=&quot;marginnote&quot;&gt;To learn more about python’s object reference, you can read this &lt;a href=&quot;https://www.geeksforgeeks.org/is-python-call-by-reference-or-call-by-value/&quot;&gt;post on geeksforgeeks&lt;/a&gt;&lt;/span&gt; is in an entirely different memory location and its scope is only within the &lt;code&gt;modify_list&lt;/code&gt; function.&lt;/p&gt;&lt;/section&gt;
+&lt;section&gt;&lt;h2 id=&quot;mutable-default-arguments&quot;&gt;Mutable default arguments&lt;/h2&gt;&lt;p&gt;TL;DR - &lt;strong&gt;Do not&lt;/strong&gt; use mutable objects as default arguments for a function.&lt;label for=&quot;md-a-less-than-a-href&quot; class=&quot;margin-toggle &quot;&gt;&amp;#8853;&lt;/label&gt;&lt;input type=&quot;checkbox&quot; id=&quot;md-a-less-than-a-href&quot; class=&quot;margin-toggle&quot; /&gt;&lt;span class=&quot;marginnote&quot;&gt;A &lt;a href=&quot;https://florimond.dev/en/posts/2018/08/python-mutable-defaults-are-the-source-of-all-evil&quot;&gt;post&lt;/a&gt; with a simpler example and a story of using mutable objects as a default argument in a function.&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Consider the following implementation&lt;/p&gt;&lt;pre&gt;&lt;code&gt;from typing import Dict
+class TrieNode:
+    def __init__(self, val:str,children:Dict[str,&quot;Node&quot;]={}) -&gt; None:
+        self.val = val
+        self.children = children
+
+node_1 = TrieNode(&quot;a&quot;)
+node_2 = TrieNode(&quot;b&quot;)
+
+node_1.children[&quot;c&quot;] = TrieNode(&quot;c&quot;)
+print(node_1.children.keys()) # Expect [c]
+print(node_2.children.keys()) # Expect [] but get [c]
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;Although &lt;code&gt;node_1&lt;/code&gt; and &lt;code&gt;node_2&lt;/code&gt; are separate instantiations of the class &lt;code&gt;TrieNode&lt;/code&gt;, they share the &lt;code&gt;children&lt;/code&gt; attribute. The children attribute for both instances point to the same memory location because of the mutable dictionary object as a default argument in &lt;code&gt;__init__&lt;/code&gt;.&lt;/p&gt;&lt;p&gt;The correct implementation would be as follows.&lt;/p&gt;&lt;pre&gt;&lt;code&gt;from typing import Dict, Optional
+class TrieNode:
+    def __init__(self, val:str,children:Optional[Dict[str,&quot;Node&quot;]]=None) -&gt; None:
+        self.val = val
+        if children:
+            self.children = children
+        else:
+            self.children = {}
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;In this implementation, the children attribute is initialized inside the class, so for every instantiation of this class, the &lt;code&gt;children&lt;/code&gt; will be saved in a separate location.&lt;/p&gt;&lt;/section&gt;
 &lt;section&gt;&lt;h2 id=&quot;list-implementation&quot;&gt;List implementation&lt;/h2&gt;&lt;p&gt;In Python, a list is implemented as a dynamic array. A contiguous block of memory is initially assigned to a list. If the size of the list exceeds this size, a new block that is &lt;code&gt;k&lt;/code&gt; times the original size is assigned where k &gt; 1. Adding a new element to an array is a O(1) operation amortized. When an element added to the list causes the list size to increase, all the elements in the list need to be copied to this new block of memory making it a O(n) time complexity operation.&lt;/p&gt;&lt;p&gt;How are the elements of an list &lt;em&gt;actually&lt;/em&gt; stored? Note that not all elements in an array need to be of the same type and each&lt;label for=&quot;md-for-example-a-list&quot; class=&quot;margin-toggle &quot;&gt;&amp;#8853;&lt;/label&gt;&lt;input type=&quot;checkbox&quot; id=&quot;md-for-example-a-list&quot; class=&quot;margin-toggle&quot; /&gt;&lt;span class=&quot;marginnote&quot;&gt;For example, a list like &lt;code&gt;x = [1,2,3,&quot;randomstring&quot;,5.3]&lt;/code&gt; is a valid list.&lt;/span&gt;element could take up different amounts of memory as in the example below.&lt;/p&gt;&lt;pre&gt;&lt;code&gt;import sys
 x = [1,2,3]
 print(sys.getsizeof(x))
