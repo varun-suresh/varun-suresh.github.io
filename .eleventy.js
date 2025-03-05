@@ -4,10 +4,10 @@ const pluginNavigation = require('@11ty/eleventy-navigation')
 const tufteWrapper = require('./util/tufteWrapper')
 const linkToHead = require("./util/linkToHead");
 const fs = require("node:fs")
-const {DateTime} = require("luxon")
+const { DateTime } = require("luxon")
 
 module.exports = function (eleventyConfig) {
-// export default function (eleventyConfig){
+	// export default function (eleventyConfig){
 	// Plugins
 	eleventyConfig.addPlugin(pluginRss)
 	eleventyConfig.addPlugin(pluginNavigation)
@@ -32,7 +32,8 @@ module.exports = function (eleventyConfig) {
 	eleventyConfig.addLayoutAlias('base', 'base.njk')
 	eleventyConfig.addLayoutAlias('simple', 'base.njk')
 	eleventyConfig.addLayoutAlias('post', 'base.njk')
-	eleventyConfig.addLayoutAlias('displaypage','displaypage.njk')
+	eleventyConfig.addLayoutAlias('displaypage', 'displaypage.njk')
+
 
 	// Pass-through files
 	eleventyConfig.addPassthroughCopy('src/admin')
@@ -44,19 +45,19 @@ module.exports = function (eleventyConfig) {
 	// Date stuff
 	eleventyConfig.addShortcode("year", () => `${new Date().getFullYear()}`); // useful for copyright
 	eleventyConfig.addFilter("postDate", (dateObj) => {
-	  if (typeof dateObj === "string") {
-		dateObj = DateTime.fromISO(dateObj);
-	  } else {
-		dateObj = DateTime.fromJSDate(dateObj);
-	  }
-	  return dateObj.toFormat("MMMM d, yyyy");
+		if (typeof dateObj === "string") {
+			dateObj = DateTime.fromISO(dateObj);
+		} else {
+			dateObj = DateTime.fromJSDate(dateObj);
+		}
+		return dateObj.toFormat("MMMM d, yyyy");
 	})
 	eleventyConfig.addFilter("lastModifiedDate", function (filepath) {
 		const stat = fs.statSync(filepath);
-  	  	return stat.mtime.toISOString();
-  	})
+		return stat.mtime.toISOString();
+	})
 
- 
+
 	// Base Config
 	return {
 		dir: {

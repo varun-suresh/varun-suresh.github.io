@@ -8,7 +8,7 @@ In addition to basic markdown features like _emphasis,_ **strong text,** [links]
 
 ## Sidenotes and Marginalia
 
-Here's where things really get exciting. Markdown footnotes[^1] are a convenient way to move digressions and asides out of the primary flow of a document, but shoving them to the bottom of a long page is no good, either. In his books, Tufte instead uses sidenotes, which keep the asides as close as possible to the related text without breaking the flow.
+Here's where things really get exciting. Markdown footnotes[^1] are a convenient way to move digressions and asides out of the primary flow of a document[^2], but shoving them to the bottom of a long page is no good, either. In his books, Tufte instead uses sidenotes, which keep the asides as close as possible to the related text without breaking the flow.
 
 [^1]: [Footnotes](https://www.markdownguide.org/extended-syntax#footnotes)
 
