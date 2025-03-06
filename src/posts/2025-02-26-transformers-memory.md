@@ -23,7 +23,7 @@ $$
     1.542 * 10^9 * 2 \approx 3 GB
 $$
 
-I have a Nvidia 3060 GPU with 12GB memory[^ GPU memory]. Loading the model onto the GPU will leave me with 
+I have a Nvidia 3060 GPU with 12GB memory. Loading the model onto the GPU will leave me with 
 $$
 12GB - 3GB \approx 9GB
 $$
@@ -33,15 +33,80 @@ Given a transformer model and a GPU, can we approximately calculate the inferenc
 
 A GPU datasheet specifies the theoretical maximum number of floating point operations it can perform in a second. Using the transformer model architecture, let's calculate the number of floating point operations (FLOP) per token
 
-## FLOP for matrix multiplication
+### FLOP for matrix multiplication
 
-Let's consider an example for matrix multiplication
+Let's consider an example for matrix multiplication [^3]
 
-
-\[
+[^3]: [Lecture Notes on FLOPS for basic operations](https://www.stat.cmu.edu/~ryantibs/convexopt-F18/scribes/Lecture_19.pdf)
+$$
 A = \begin{bmatrix} 
-  a_{11} & a_{12} & a_{13} \\ 
-  a_{21} & a_{22} & a_{23} \\ 
-  a_{31} & a_{32} & a_{33} 
+  1 & 2 & 3 \\ 
+  4 & 5 & 6 
 \end{bmatrix}
-\]
+\quad
+B = \begin{bmatrix}
+ 1 & 2 & 3 & 4 \\
+ 5 & 6 & 7 & 8 \\
+ 9 & 10 & 11 & 12
+ \end{bmatrix} 
+$$
+
+A is a *2x3* matrix and B is a *3x4* matrix. The product of A and B will have *2x4* elements. In the generalized case, when a matrix of dimensions *mxn* is multiplied with a matrix of dimensions *nxp*, the product is a *mxp* dimensional matrix. 
+
+Calculating the first element of the *AxB*, 
+ $$
+ 1.1 + 2.5 + 3.9 = 38
+ $$
+ Notice that there are 3 multiplication operations and 2 addition operations. In the general case, there are *n* additions and *n-1* multiplications to calculate one element in the product matrix.
+ 
+ $$
+n + (n-1) \approx 2n
+ $$
+ Since there are 8 elements in *AxB* and *mxp* elements in the general case, the total number of floating point operations to calculate the product of two matrices is
+ $$
+  \approx (2n)*m*p = 2mnp
+ $$
+
+### FLOP in a transformer block
+
+A transformer block consists of two sub-blocks, a multi-headed attention block and a feed forward block which are shown in the picture below.
+
+
+Let's calculate the number of floating point operations in each of the steps in the transformer block. 
+$$
+\begin{array} {l l}
+t_{e}: &\text{Token embedding} \\
+d_{model}: &\text{Model dimension} \\
+d_{k}: &\text{Key,Query and Value matrix dimension} \\
+W_{Q},W_{K},W_{V}: &\text{ Query, Key and Value matrices} \\
+n_{heads} : &\text{Number of heads in the multi-headed attention block}
+\end{array}
+$$
+Note that typically
+$$
+d_{k} = d_{model} / n_{heads}
+$$
+Note: Insert a transformer block picture
+
+For a single token, the first step is calculating the keys, queries and values for all the attention head. 
+$$
+q = W_{Q}t_{e}^{T}
+$$
+where 
+$$
+\begin{array}{l l}
+t_{e}: \mathbb{R}^{1xd_{model}} \\ 
+W_{Q}: \mathbb{R}^{d_{model}xd_{k}}
+\end{array}
+$$
+ 
+The number of floating point operations to calculate q is 
+$$ 
+2d_{model}d_{k} = \frac{2d_{model}^2}{n_{head}}
+$$
+
+The same number of FLOP are required to calculate k and v. Therefore the total FLOP count is
+$$
+3.\frac{2d_{model}^2}{n_{head}} = \frac{6d_{model}^2}{n_{head}}
+$$
+
