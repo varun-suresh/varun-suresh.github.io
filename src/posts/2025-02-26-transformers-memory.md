@@ -4,7 +4,7 @@ subtitle: Understanding memory usage when running inference using Transformers
 date: 2025-02-26
 blurb: An in-depth breakdown with an example of how much GPU memory is required to run inference using a Transformer
 ---
-
+ WIP : To be updated
 ## Introduction
 
 Everyday we hear of new AI models that are larger and better than ever before. As of writing this post, the state-of-the-art models have hundreds of billions of parameters[^1]. How much GPU memory will I need to run this model? How long will inference take on a given GPU? In this post, I will walk through an example to understand how to calculate memory usage when running inference. 
