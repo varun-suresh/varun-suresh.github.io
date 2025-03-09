@@ -19,7 +19,14 @@ Given a transformer model and a GPU, can we approximately calculate the inferenc
 $$
 24.n_{layers}.d_{model}^2 + 2.d_{vocab}.d_{model}^2
 $$
-
+where
+$$
+\begin{array}{c|c}
+n_{layers}: & \text{Number of transformer blocks} \\
+d_{model}: & \text{Model Embedding dimension} \\
+d_{vocab}: &\text{Total number of tokens in the vocabulary}
+\end{array}
+$$
 In the next few sub-sections, I go through in detail as to how I arrived at the above equation. Feel free to skip to the memory section if you aren't particularly interested in the details.
 
 A GPU datasheet specifies the theoretical maximum number of floating point operations it can perform in a second. Using the transformer model architecture, let's calculate the number of floating point operations (FLOP) per token
@@ -69,7 +76,7 @@ $$
 t_{e}: &\text{Token embedding} \quad (\mathbb{R}^{1xd_{model}})\\
 d_{model}: &\text{Model embedding dimension} \\
 d_{k}: &\text{Key,Query and Value matrix dimension per head in the multi-headed attention block} \\
-W_{Q},W_{K},W_{V}: &\text{ Query, Key and Value matrices} \quad (\mathbb{R}^{d_{model}xd_{k}})\\
+W_{Q},W_{K},W_{V}: &\text{Query, Key and Value matrices} \quad (\mathbb{R}^{d_{model}xd_{k}})\\
 n_{heads} : &\text{Number of heads in the multi-headed attention block} \\
 n_{layers}: &\text{Number of transformer blocks in the model} \\
 d_{vocab}: &\text{Vocabulary size for tokenization}
@@ -105,10 +112,10 @@ $$
 Scaled dot product attention is calculated using
 $$
 \begin{aligned}
-attention = softmax\left(\frac{qk^T}{\sqrt{d_k}}\right).v \\
+attention = softmax\left(\frac{qk^T}{d_k^{0.5}}\right).v \\
 qk^T = 2.d_{k} = \frac{2.d_{model}}{n_{heads}} \quad \text{FLOP}   \\
-softmax\left( \frac{qk^T}{\sqrt{d_k}}\right) = 2.d_{k} = \frac{2.{d_{model}}}{n_{heads}} \quad \text{FLOP}  \\
-softmax\left( \frac{qk^T}{\sqrt{d_k}}\right).v = 2.d_{model} \quad \text{FLOP} \\
+softmax\left( \frac{qk^T}{d_k^{0.5}}\right) = 2.d_{k} = \frac{2.{d_{model}}}{n_{heads}} \quad \text{FLOP}  \\
+softmax\left( \frac{qk^T}{d_k^{0.5}}\right).v = 2.d_{model} \quad \text{FLOP} \\
 \text{Total FLOP in a single attention head} = \frac{4.d_{model}}{n_{heads}} + 2.d_{model} \tag{4} \\
 \text{Total FLOP with all the attention heads} = 4.d_{model} + 2.d_{model}.n_{heads}
 \end{aligned}
@@ -161,18 +168,27 @@ My Nvidia 3060 GPU can theoretically do 101T[^nvidia3060] FLOPS using FP16 (half
 
 ## Memory requirements
 
-In a transformer model, two major components that take up the GPU memory are the model parameters and KV cache. In the following sub-sections, I will show how to calculate the memory usage based on the model size and the size of the KV cache.
+In a transformer model, two major components that take up the GPU memory are the model parameters and KV cache. The formula to calculate the memory usage is
+$$
+2.n_{params} + 4.n_{layers}.d_{model} \quad bytes
+$$ 
+where 
+$$
+\begin{array}{c|c}
+n_{params}: & \text{Number of parameters in the model}
+\end{array}
+$$
+In the following sub-sections, I will show how I arrived at this formula.
 
 ### Model parameters
-Typically we store all the parameters in half precision(FP16), each parameter requires 2 bytes. If a model has $n$ parameters, the memory required to store them is simply $ 2.n $ bytes
+Typically we store all the parameters in half precision(FP16), each parameter requires 2 bytes. If a model has $n$ parameters, the memory required to store them is simply $ 2.n_{params} $ bytes
 
-My Nvidia 3060 GPU has 12GB memory. I cannot fit a Llama 3.1 8B model because storing the parameters alone would require 16GB of memory. But I can fit a smaller model like GPT2 XL with ~1.5B parameters which would take about 3GB of memory. 
 
 ### KV Cache
 Let's first understand why KV cache is necessary. In an autoregressive model like GPT-2, the next token depends on the previous tokens. Attention is calculated using the formula
 
 $$
-Attention(Q,K,V) = softmax \left( \frac{QK^T}{\sqrt{d_k}}\right).V
+Attention(Q,K,V) = softmax \left( \frac{QK^T}{d_k^{0.5}}\right).V
 $$
 
 $Q$,$K$ and $V$ are matrices of dimensions $d_{model}xn_s$, $n_s$ is the length of the sequence. Notice that the $QK^T$ computation increases quadratically with the length of the sequence. [^kvcache] The key and value calculations are repeated for all the previous tokens which is wasteful. Caching keys and values will make the $QK^T$ computation linear with the length of the sequence $n_s$.
