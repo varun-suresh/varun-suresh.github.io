@@ -148,7 +148,7 @@ To get an idea of the scale of FLOP required to do the forward pass in a transfo
 $$
 \begin{array}{c|c|c|c|c}
     \text{Model Name} & \text{Layers} & \text{Embedding dimension} & \text{Vocabulary Size} &\text{FLOP}\\ \hline
-    GPT2 XL (1.55B) & 12 & 768 & 50257 & 0.260T\\
+    GPT2 XL (1.55B) & 48 & 1600 & 50257 & 0.260T\\
     Llama 3.1(8B) & 32 & 4096 & 128000 & 4.307T&\\
     Llama 3.1(405B) & 126 & 16384 & 128000 & 69.53T& 
 \end{array}
@@ -160,15 +160,47 @@ My Nvidia 3060 GPU can theoretically do 101T[^nvidia3060] FLOPS using FP16 (half
 
 ## Memory requirements
 
-First, let's consider the memory needed to store all the parameters of the model. Assuming that we are storing all the parameters in half precision(FP16), each parameter requires 2 bytes. If a model has $n$ parameters, the memory required to store them is simply $ 2.n $ bytes
+In a transformer model, two major components that take up the GPU memory are the model parameters and KV cache. In the following sub-sections, I will show how to calculate the memory usage based on the model size and the size of the KV cache.
 
-My Nvidia 3060 GPU has 12GB memory. I cannot fit a Llama 3.1 8B model because storing the parameters alone would require 16GB of memory. Let's consider a smaller model like GPT2 XL with ~1.5B parameters. 
+### Model parameters
+Typically we store all the parameters in half precision(FP16), each parameter requires 2 bytes. If a model has $n$ parameters, the memory required to store them is simply $ 2.n $ bytes
+
+My Nvidia 3060 GPU has 12GB memory. I cannot fit a Llama 3.1 8B model because storing the parameters alone would require 16GB of memory. But I can fit a smaller model like GPT2 XL with ~1.5B parameters which would take about 3GB of memory. 
+
+### KV Cache
+Let's first understand why KV cache is necessary. In an autoregressive model like GPT-2, the next token depends on the previous tokens. Attention is calculated using the formula
+
 $$
-12GB - 3GB \approx 9GB
+Attention(Q,K,V) = softmax \left( \frac{QK^T}{\sqrt{d_k}}\right).V
 $$
 
+$Q$,$K$ and $V$ are matrices of dimensions $d_{model}xn_s$, $n_s$ is the length of the sequence. Notice that the $QK^T$ computation increases quadratically with the length of the sequence. [^kvcache] The key and value calculations are repeated for all the previous tokens which is wasteful. Caching keys and values will make the $QK^T$ computation linear with the length of the sequence $n_s$.
 
+Let's calculate how much memory is required to cache a single token.
+$$
+\begin{array}{c|c}
+\text{To store keys for a single attention head} & 2.d_k \\
+\text{Storing keys and values} &  4.d_k \\
+\text{For all heads} & 4.d_k.n_{heads} = 4.d_{model} \\
+\text{For all layers in the transformer} & 4.n_{layers}.d_{model} \tag{10}
+\end{array}
+$$
+
+Using (10), the memory needed to store 1000 tokens for a few models are shown below
+$$
+\begin{array}{c|c|c|c}
+    \text{Model Name} & \text{Layers} & \text{Embedding dimension} & \text{Memory per 1000 tokens} \\ \hline
+    GPT2 XL (1.55B) & 48 & 1600 &  0.307GB\\
+    Llama 3.1(8B) & 32 & 4096  & 0.524GB\\
+    Llama 3.1(405B) & 126 & 16384 & 8.25GB
+\end{array}
+$$
+
+On my Nvidia 3060 GPU, using GPT2, I can cache about $\frac{9GB}{0.307GB} \approx 30k$ tokens. The memory used for kv cache increases linearly with both $n_{layers}$ and embedding size.
+
+[^kvcache]: [KV cache explained](http://medium.com/@joaolages/kv-caching-explained-276520203249)
 ## References
 1. [Attention is all you need](https://arxiv.org/pdf/1706.03762)
 2. [Kipply's blog on transformer inference arithmetic](https://kipp.ly/transformer-inference-arithmetic/)
 3. [Andrej Karpathy's nanoGPT implementation](https://github.com/karpathy/nanoGPT)
+4. [KV cache explained with images/GIFs](http://medium.com/@joaolages/kv-caching-explained-276520203249)
