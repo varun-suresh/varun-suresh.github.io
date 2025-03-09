@@ -79,7 +79,8 @@ Note that typically
 $$
 d_{k} = \frac{d_{model}}{n_{heads}}
 $$
-Note: Insert a transformer block picture
+![Transformer Architecture](/assets/img/transformerImg.png)
+Image Courtesy: [Attention is all you need](https://arxiv.org/pdf/1706.03762)
 
 For a single token, the first step is calculating the keys, queries and values for all the attention head. 
 $$
