@@ -1,13 +1,10 @@
 ---
-permalink: "{{ meta.feedUrl }}"
 eleventyExcludeFromCollections: true
 ---
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>{{ meta.title | markdownInline | striptags }}</title>
   <subtitle>{{ meta.subtitle | markdownInline | striptags }}</subtitle>
-  <link href="{{ meta.url }}{{ meta.feedUrl }}" rel="self"/>
-  <link href="{{ meta.url }}"/>
   <updated>{{ collections.posts | rssLastUpdatedDate }}</updated>
   <id>{{ meta.url }}</id>
   <author>
