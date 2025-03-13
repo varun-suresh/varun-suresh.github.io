@@ -20,7 +20,7 @@ from typing import List
 def modify(x:int):
     x+= 1
 
-def modify_list(x:List):
+def modify_list(x:List[int]):
     x.append(1)
 ```
 
@@ -49,7 +49,7 @@ print(x)
 When a mutable object like a list or a dictionary is passed to a function, it is passed by reference. If the object is modified, the change is reflected outside the function as well. When an immutable object like an integer or tuple is passed to a function, it is equivalent to passing by value.
 
 ```
-def modify_list(x:List):
+def modify_list(x:List[int]):
     x.append(5)
     x = [1,2]
 x = [3,4]
@@ -123,8 +123,53 @@ print(sys.getsizeof(x))
 
 ```
 
-The result is the same in both cases, even though `Very long block of text` should take up more bytes that `3`. That is because only the references (address of the memory location + offset) to the elements are stored in the list. It is not that all the elements in the list are stored in contiguous locations (like in C, C++ arrays), but their references are stored sequentially.
+The result is the same in both cases, even though `Very long block of text` should take up more bytes than `3`. That is because only the references (address of the memory location + offset) to the elements are stored in the list. It is not that all the elements in the list are stored in contiguous locations (like in C, C++ arrays), but their references are stored sequentially.
+
+
+## Numpy learnings
+
+Numpy is a python library that speeds up vector and matrix operations. Under the hood, numpy runs C code to execute operations. C loops are significantly faster than Python loops and hence there is a significant speedup when numpy is used instead of python lists.
+
+### Numpy ndarray
+ndarray stands for n-dimensional array. There are two main components to a ndarray - data buffer and metadata. The data buffer is the contiguous memory block that stores the actual array data. The metadata contains information like the data type, shape of the array etc. Let's say you wanted to transpose a matrix. Numpy internally does not change the data buffer, instead it modifies the meta data to indicate how the data should be read. 
+
+**Gotchas to be aware of**
+
+Consider an example where you slice an array
+```
+import numpy as np
+
+a = np.array([1,2,3,4])
+b = a[0:2] # b -> [1,2]
+c = a[[0:2]]
+a[0:2] = [5,6]
+print(b) # Expected: [1,2], Actual result: [5,6]
+print(c) # [1,2]
 
 ```
+This is because _b_ is merely a view of _a_, _b_ still points to the same data buffer as _a_. _c_ however creates an explicit copy.[^numpyref]
+
+[^numpyref]: [Internal organization of NumPy arrays](https://numpy.org/doc/stable/dev/internals.html#numpy-internals)
+
+### Broadcasting
+Using numpy to multiply a scalar to a vector or a matrix is extremely straightforward. For example
 
 ```
+import numpy as np
+a = np.array([1,2,3])
+b = 3
+print(a*b) # np.array([3,6,9])
+```
+
+_a_ is an array of shape (1,3) and _b_ is a scalar. When the two are multiplied, _b_ is "streched" to be the same size as _a_ and numpy multiplies it point-wise. Consider another example where we want to multiply each row of a matrix by a different number
+
+```
+import numpy as np
+a = np.array([[1,2],[3,4],[5,6]]) # Shape: 3x2
+b = np.array([10,20,30]) # Shape: (3)
+print(a*b) # Raises a dimensional mismatch error
+print(a*b[:,np.newaxis]) # Now b is a (3,1) shaped array -> np.array([[10,20],[60,80],[150,180]])
+```
+Numpy can perform operations on two arrays when either their dimensions are equal or one of the two corresponding dimensions is 1. [^numpy-broadcasting]
+
+[^numpy-broadcasting]: [Numpy broadcasting](https://numpy.org/doc/stable/user/basics.broadcasting.html)
