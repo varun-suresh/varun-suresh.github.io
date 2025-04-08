@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>Varun Suresh</title>
   <subtitle>Personal Website</subtitle>
-  <updated>2025-02-26T00:00:00Z</updated>
+  <updated>2025-04-06T00:00:00Z</updated>
   <id>varun-suresh.github.io</id>
   <author>
     <name>Varun Suresh</name>
@@ -342,5 +342,15 @@ n_{params}: &amp;#x26; &#92;text{Number of parameters in the model}
 &lt;li&gt;&lt;a href=&quot;http://medium.com/@joaolages/kv-caching-explained-276520203249&quot;&gt;KV cache explained with images/GIFs&lt;/a&gt;&lt;/li&gt;
 &lt;/ol&gt;&lt;/section&gt;
 </content>
+  </entry>
+  
+  <entry>
+    <title>undefined</title>
+    <link href="/posts/volatile-gpu-util/"/>
+    <updated>2025-04-06T00:00:00Z</updated>
+    <id>/posts/volatile-gpu-util/</id>
+    <content type="html">&lt;section&gt;&lt;p&gt;When running training or inference of a deep learning model on a GPU, we want the GPU to be “utilized” optimally. &lt;/p&gt;
+&lt;p&gt;Typically, when I run training using PyTorch, in a different terminal window, I run &lt;code&gt;watch -n 1 nvidia-smi&lt;/code&gt;. This gives me an idea of how much GPU memory is being used. The volatile GPU util field indicates the percentage of time operations are running on the GPU. If the data is not in GPU memory, GPU will be idle when data is being fetched from the main memory to the GPU. This results in under-utilization of the GPU and typically indicates the data loader needs to be optimized.&lt;/p&gt;
+&lt;/section&gt;</content>
   </entry>
 </feed>

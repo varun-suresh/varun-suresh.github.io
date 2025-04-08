@@ -54,33 +54,12 @@
     </header>
   <body>
 		<article>
-		<h1>Posts
+		<h1>Volatile GPU Util
 </h1>
-		
-				<section><p><a href="/posts/volatile-gpu-util/">Volatile GPU Util</a></p>
-<p style="margin-top" 0;">
-<small><em> April 6, 2025</em> - What does Volatile GPU Util when running nvidia-smi mean?</small>
+		<p class="subtitle">Brief explanation of what it means and why it should always be 100%
 </p>
-<p><a href="/posts/transformers-flops-and-memory-usage/">Transformers FLOPS and memory usage</a></p>
-<p style="margin-top" 0;">
-<small><em> February 26, 2025</em> - An in-depth breakdown with an example of how much GPU memory is required to run inference using a Transformer</small>
-</p>
-<p><a href="/posts/python-musings/">Python Musings</a></p>
-<p style="margin-top" 0;">
-<small><em> February 15, 2025</em> - What happens under the hood when we overwrite a variable but that is not an in-place operation?</small>
-</p>
-<p><a href="/posts/training-a-resnet-on-cifar-10/">Training a ResNet on CIFAR-10</a></p>
-<p style="margin-top" 0;">
-<small><em> January 12, 2025</em> - Define ResNet as detailed in the paper, train it on CIFAR-10 and reproduce the classification results on CIFAR-10</small>
-</p>
-<p><a href="/posts/retrieval-augmented-generation/">Retrieval Augmented Generation</a></p>
-<p style="margin-top" 0;">
-<small><em> December 24, 2024</em> - Fine-tuning BERT to encode sentences and GPT-2 for question answering. Can I generate meaningful outputs using these relatively small models?</small>
-</p>
-<p><a href="/posts/sentiment-classification-on-imdb-dataset/">Sentiment Classification on IMDb dataset</a></p>
-<p style="margin-top" 0;">
-<small><em> November 30, 2024</em> - Use LoRA to fine-tune GPT-2 and BERT for sentiment classification.</small>
-</p>
+				<section><p>When running training or inference of a deep learning model on a GPU, we want the GPU to be “utilized” optimally. </p>
+<p>Typically, when I run training using PyTorch, in a different terminal window, I run <code>watch -n 1 nvidia-smi</code>. This gives me an idea of how much GPU memory is being used. The volatile GPU util field indicates the percentage of time operations are running on the GPU. If the data is not in GPU memory, GPU will be idle when data is being fetched from the main memory to the GPU. This results in under-utilization of the GPU and typically indicates the data loader needs to be optimized.</p>
 </section>
 		</article>
 		<footer>
