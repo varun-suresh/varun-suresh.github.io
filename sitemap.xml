@@ -1,0 +1,63 @@
+
+<?xml version="1.0" encoding="utf-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+    
+        <url>
+        <loc>/posts/sentiment-classification-on-imdb-dataset/</loc>
+        <lastmod>2024-11-30T00:00:00.000Z</lastmod>
+        </url>
+    
+
+    
+        <url>
+        <loc>/posts/retrieval-augmented-generation/</loc>
+        <lastmod>2024-12-24T00:00:00.000Z</lastmod>
+        </url>
+    
+
+    
+        <url>
+        <loc>/posts/training-a-resnet-on-cifar-10/</loc>
+        <lastmod>2025-01-12T00:00:00.000Z</lastmod>
+        </url>
+    
+
+    
+        <url>
+        <loc>/posts/python-musings/</loc>
+        <lastmod>2025-02-15T00:00:00.000Z</lastmod>
+        </url>
+    
+
+    
+        <url>
+        <loc>/posts/transformers-flops-and-memory-usage/</loc>
+        <lastmod>2025-02-26T00:00:00.000Z</lastmod>
+        </url>
+    
+
+    
+        <url>
+        <loc>/posts/volatile-gpu-util/</loc>
+        <lastmod>2025-04-06T00:00:00.000Z</lastmod>
+        </url>
+    
+
+    
+
+    
+        <url>
+        <loc>/</loc>
+        <lastmod>2025-04-10T00:54:32.001Z</lastmod>
+        </url>
+    
+
+    
+        <url>
+        <loc>/posts/</loc>
+        <lastmod>2025-04-10T00:54:32.001Z</lastmod>
+        </url>
+    
+
+</urlset>
